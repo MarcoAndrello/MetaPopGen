@@ -1,0 +1,136 @@
+---
+title: "MetaPopGen Vignette"
+author: Marco Andrello
+date: February 06, 2020
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+MetaPopGen 2.0 can be used to simulate multi-locus genetic processes. This vignette explains how to set up and run multi-locus simulations.
+
+To cite the multilocus version of MetaPopGen, please use:  
+Andrello M et al. (2019). A multi-locus demo-genetic simulator to model populations of large sizes. **Molecular Ecology Resources**, submitted.
+
+# Installation
+The easiest way to install MetaPopGen 2.0 is through devtools. After installing the devtools package in R, run the followin code
+```{r eval=F}
+devtools::install_github(MarcoAndrello/MetaPopGen-2.0)
+```
+You may want to replace the "2.0" with the latest version of the package. Check on https://github.com/MarcoAndrello/
+
+Once MetaPopGen 2.0 is installed, load it:
+```{r message=FALSE}
+library(MetaPopGen)
+```
+To read the help files and see how the program works, you can type :
+```{r eval=F}
+?MetaPopGen
+```
+
+# Initializing the simulations
+## Defining the simulation parameters and running the initialization function
+The first piece of information needed to initialize a new simulation is a vector containing the __number of alleles__ at each locus. For example, to simulate two loci with two alleles each, type:
+```{r}
+allele_vec <- c(2,2)
+
+```
+Next you need to define the other parameters of the simulation, namely:  
+- The __recombination rate__ *r*;  
+- The __mutation rate__ for each locus *mu*;  
+- The __number of demes__ *n*;  
+- The __number of age-classes__ *z*;  
+- The __carrying capacity__ of each deme *kappa0*;  
+- The __sexuality__ of the species *sexuality*, either "monoecious" or "dioecious";  
+These parameters have to be used as arguments in the function initialize.multilocus:
+```{r}
+init.par <- initialize.multilocus(allele_vec=allele_vec,
+                                             r=0.5,
+                                             mu=c(0.01,0.01),
+                                             n=3,
+                                             z=1,
+                                             kappa0=100,
+                                             sexuality="monoecious")
+
+```
+The code shown above initializes the simulations for a monoecious species with two loci with two alleles each, a recombination rate *r* = 0.5, a mutation rate *mu* = 0.01 at each locus, *n* = 3 demes, *z* = 1 age class and a carrying capacity *kappa0* = 100 individuals per deme.
+The function initialize.monoecious defines the genetic composition of the __initial population__ *N1* (or *N1_F* and *N1_M* in the case of dioecious life-cycles) by assigning an equal number of individuals to each genotype and each age-class across all demes, and stores it in the output init.par, along with other parameters needed for the simulation.
+```{r}
+names(init.par)
+init.par$N1
+```
+This shows that there are nine genotypes. We see that there are 11 individuals per genotype per age-class in each deme. This is because the function defines the number of individuals so that the sum over genotypes and age-classes in each deme roughly equals the carrying capacity *kappa0* of the deme. The initial composition can be changed by reassigning the elements of init.par$N1. The following code results in the first and second deme containing only A1B1/A1B1 individuals and the third deme containing only A2B2/A2B2 individuals.
+```{r}
+init.par$N1[,,] <- 0
+init.par$N1[1,c(1,2),1] <- 100      
+init.par$N1[9,3,1] <- 100
+init.par$N1
+```
+Lastly, we need to define the __simulation time__ *T_max*; here, we use 5 time steps
+```{r}
+T_max <- 5
+```
+## Parametrizing survival probabilities
+Survival probabilities can be dependent on genotype, age-class, deme, time and, in the case of dioecious life-cycle, sex. The easiest way to define survival probabilities is to create an array of dimensions *m* (number of genotypes), *n* (number of demes), *z* (number of age-classes) and *T_max* (simulation time) and fill it with the desired survival probabilities. Here, we simply assign the same survival probability to each class:  
+```{r}
+sigma <- array(0.75,c(init.par$m, init.par$n, init.par$z, T_max))
+sigma[,,,1]
+```
+However, this does not define the names of the dimensions as in init.par\$N1. It is practical to have dimension names to quickly identify to which genotype, deme, etc. an entry refers. A smart way to have dimension names without creating them by hand is to copy them from init.par\$N1. We still need to name the fourth dimension (time), but that is relatively easy.
+```{r}
+name.dim <- dimnames(init.par$N1)
+name.dim$time <- c(1:T_max)
+dimnames(sigma) <- name.dim
+sigma[,,,1]
+```
+## Parametrizing fecundities
+Female and male fecundities can be parametrized with the same procedure used for survival probabilities, i.e by creating an array with the good dimensions, filling it with the desired values and then copying the dimension names from init.par\$N1.
+```{r}
+phi_F <- array(30,c(init.par$m, init.par$n, init.par$z, T_max))
+phi_M <- array(100,c(init.par$m, init.par$n, init.par$z, T_max))
+dimnames(phi_F) <- dimnames(phi_M) <- name.dim
+```
+## Parametrizing dispersal probabilities
+Adult and propagule dispersal probabilities between demes are defined using an *n* x *n* matrix giving the probability of dispersal from column *j* to row *i*. Note that when dispersal is not symmetrical between demes, the dispersal probability from column *j* to row *i* is not the same as the dispersal probability from row *i* to column *j*. What is important is that the sum of the elements of each column cannot exceed one, while the sum of the elements of rows is unbounded. Here, we assume that adults do not move between demes:
+```{r}
+delta.ad <- diag(init.par$n)
+dimnames(delta.ad) <- list(destination = c(1:3),
+                           origin = c(1:3))
+delta.ad
+```
+while propagules disperse following the matrix
+```{r}
+delta <- matrix(c(0.9, 0.4, 0,
+                  0.1, 0.5, 0.1,
+                  0,   0.1, 0.9),
+                nrow=3, ncol=3, byrow=T)
+    
+dimnames(delta) <- list(destination = c(1:3),
+                        origin = c(1:3))
+delta
+```
+# Performing the simulation
+The simulation can be performed using the functions sim.metapopgen.monoecious.multilocus (or sim.metapopgen.dioecious.multilocus for dioecious life-cycles)
+```{r}
+N <- sim.metapopgen.monoecious.multilocus(init.par=init.par,
+                                          sigma=sigma,
+                                          phi_F=phi_F, phi_M=phi_M,
+                                          delta=delta, delta.ad=delta.ad,
+                                          T_max=T_max)
+
+```
+The results are stored in the object N. For example, look at the final composition of the population at time 5:
+```{r}
+N[,,,5]
+
+```
+Your results will generally be different from these because the simulations are stochastic. 
