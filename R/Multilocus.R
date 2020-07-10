@@ -540,7 +540,7 @@ Type_gamete <- function(fec,Proba){
 }
 
 # Create multilocus survival
-create.multilocus.survival <-function(allele_vec, init.par, n.sel, x, xi, surv.max, omega=1, T_max){
+create.multilocus.rate <-function(allele_vec, init.par, n.sel, x, xi, rate.max, omega=1, T_max){
     # This function was used in Andrello et al, submitted to Mol Ecol Res
     # Checking
     # Number of loci
@@ -565,12 +565,12 @@ create.multilocus.survival <-function(allele_vec, init.par, n.sel, x, xi, surv.m
     K = 2*n.sel + 1 # 2 is because all loci under selection are biallelic. Next version of the function could consider cases of more than 2 alleles at selected loci
     
     # Initialize survival
-    sigma_OUT <- array(0,dim=c(m,n,z,T_max))
-    # Defining survival as a function of phenotype and environmental variable x using an exponential function
-    # See eq. 1 in the manuscript
-    Surv <- array(NA,dim=c(n,K))
+    rate_OUT <- array(0,dim=c(m,n,z,T_max))
+    # Defining the rate as a function of genotype class and environmental variable x using an exponential function
+    # See equation in the manuscript
+    Rate <- array(NA,dim=c(n,K))
     for(i in 1 : K) {
-        Surv[,i] <- surv.max * exp( -(xi[i] - x)^2 / (2*omega^2) )
+        Rate[,i] <- rate.max * exp( -(xi[i] - x)^2 / (2*omega^2) )
     }
     
     # Computing the number of "+" alleles  per multilocus genotype
@@ -595,15 +595,18 @@ create.multilocus.survival <-function(allele_vec, init.par, n.sel, x, xi, surv.m
         }
     }
     
-    # Assigning survival to multilocus genotypes as a function of the number of "+" alleles
+    # Assigning vital rates to multilocus genotypes as a function of the number of "+" alleles
     for (x in 1 : z) {
         for (t in 1 : T_max) {
             for(k in 1:m) {
-                sigma_OUT[k,,x,t] <- Surv[,al[k]+1]
+                rate_OUT[k,,x,t] <- Rate[,al[k]+1]
             }
         }
     }
-    
-    return(sigma_OUT)
+    dimnames(rate_OUT) <- list(genotype = dimnames(init.par$meiosis_matrix)$genotype,
+                               deme = c(1:init.par$n),
+                               age = c(1:init.par$z),
+                               time = c(1:T_max))
+    return(rate_OUT)
 }
 
