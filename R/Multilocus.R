@@ -86,7 +86,7 @@ genotype.index.multilocus <- function(allele_vec,r,method){
     }
     
     # 2) Genotype-based
-    if ( method == "genotype") {    
+    if ( method == "locus") {    
         # Function expand.grid.unique found on stack.overflow from user Ferdinand.kraft
         # https://stackoverflow.com/questions/17171148/non-redundant-version-of-expand-grid
         # It is used to couple the alleles of the same locus to form unique genotypes
@@ -126,18 +126,18 @@ genotype.index.multilocus <- function(allele_vec,r,method){
 }
 
 
-create.meiosis.matrix <- function(index_matr, allele_vec, r=0.5, mu, method){
+create.meiosis.matrix <- function(index_matr, allele_vec, r=0.5, mu, method, return_submatrices = F){
     # Creation of the meiosis matrix
     # This matrix gives the probabilities for each gamete type as a function of the parental genotypes and mutation,
     
-    # index_matr    matrix of indices of multilocus genotypes
-    #               (obtained from genotype.index.multilocus in the nloc-dimensional form for the "new" method or the 2D form for the "old" method)
+    # index_matr    n-dimensional array of indices of multilocus genotypes
+    #               (obtained from genotype.index.multilocus in the nloc-dimensional form for the locus-based method or in the 2D form for the gamete-based method)
     # allele_vec    vector of number of alleles at each locus
     # r = 0.5       recombination rate
     # mu            Vector giving the mutation rate at each locus
     # method can be "gamete" or "genotype" 
     
-    if (method == "genotype" ) {
+    if (method == "locus" ) {
         if(any(allele_vec>9)) stop("More than 10 alleles per locus is not implemented yet")
         
         nloc <- length(allele_vec) # Number of loci
@@ -254,28 +254,33 @@ create.meiosis.matrix <- function(index_matr, allele_vec, r=0.5, mu, method){
             GENO[i.geno,4] <- as.numeric(substr(col,4,4))
             rownames(GENO)[i.geno] <- paste0(row,"/",col)
         }
+        # colnames(GENO) <- c("gam1_A","gam1_B","gam2_A","gam2_B")
+        
         
         # Create RECOMB matrix
         RECOMB <- array(0, dim=c(num.gametes,num.genotypes)) # Matrix giving the probability of production of each gameto-type (lines) for each genotype (columns)
-        dimnames(RECOMB) <- list(colnames(index_matr),rownames(GENO))
-        
+        dimnames(RECOMB) <- list(colnames(index_matr), rownames(GENO))
         # if (length(allele_vec)==2){
-        TYPE<-expand.grid(1:allele_vec[1], 1:allele_vec[2]) # seems to give the gameto-type: which allele for each locus for each line of RECOMB
+        # This gives the gameto-type: which allele for each locus for each line of RECOMB
+        # Ensures that first locus varies more slowly, as in GENO
+        TYPE <- expand.grid(1:allele_vec[2], 1:allele_vec[1])
+        TYPE <- TYPE[,c(2:1)]
         colnames(TYPE) <- LETTERS[1:num.loci] ## I added this
+        rownames(TYPE) <- rownames(RECOMB) ### I added this 07/07/2020
         for (k in 1 : num.genotypes){
             genotype<-GENO[k,]
             for(j in 1 : num.gametes){
                 if ((genotype[1]== TYPE[j,1]) & (genotype[3]==TYPE[j,2])){
-                    RECOMB[j,k]<-RECOMB[j,k]+((1/2)*(1-r))
+                    RECOMB[j,k] <- RECOMB[j,k] + ((1/2)*(1-r))
                 }
                 if ((genotype[1]== TYPE[j,1]) & (genotype[4]==TYPE[j,2])){
-                    RECOMB[j,k]<-RECOMB[j,k]+(r/2)
+                    RECOMB[j,k] <- RECOMB[j,k] + (r/2)
                 }
                 if ((genotype[2]== TYPE[j,1]) & (genotype[3]==TYPE[j,2])){
-                    RECOMB[j,k]<-RECOMB[j,k]+(r/2)
+                    RECOMB[j,k] <- RECOMB[j,k] + (r/2)
                 }
                 if ((genotype[2]== TYPE[j,1]) & (genotype[4]==TYPE[j,2])){
-                    RECOMB[j,k]<-RECOMB[j,k]+((1/2)*(1-r))
+                    RECOMB[j,k] <- RECOMB[j,k] + ((1/2)*(1-r))
                 }
             }
         }
@@ -325,28 +330,40 @@ create.meiosis.matrix <- function(index_matr, allele_vec, r=0.5, mu, method){
             }
         }
         
-        PROBA<-array(0,dim=c(num.gametes,num.genotypes))
-        dimnames(PROBA)<-list(type=rownames(index_matr),genotype_parent=rownames(GENO))
-        
-        for (j in 1 : num.genotypes){
+          PROBA<-array(0,dim=c(num.gametes,num.genotypes))
+          dimnames(PROBA)<-list(type=rownames(index_matr),genotype_parent=rownames(GENO))
+          
+          for (j in 1 : num.genotypes){
             type <- c()
             p <- c()
             for(i in 1 : num.gametes){
-                if(RECOMB[i,j] == 0) {
-                    next
-                } else {
-                    type <- c(type,i)
-                    p <- c(p,RECOMB[i,j])
-                }
+              if(RECOMB[i,j] == 0) {
+                next
+              } else {
+                type <- c(type,i)
+                p <- c(p,RECOMB[i,j])
+              }
             }
             p_i <- c()
             for(i in 1 : length(type)){
-                p_i <- p[i]*MU[type[i],]
-                PROBA[,j] <- PROBA[,j] + c(p_i)
+              p_i <- p[i]*MU[type[i],]
+              PROBA[,j] <- PROBA[,j] + c(p_i)
             }
-        }
+          }
+
+          # Slower but clearer (07/07/2020) -- try transforming the inner for loop with matrix multiplications
+          # PROBA<-array(0,dim=c(num.gametes,num.genotypes))
+          # dimnames(PROBA)<-list(type=rownames(index_matr),genotype_parent=rownames(GENO))
+          # for (j in 1 : ncol(PROBA)) {
+          #   for (k1 in 1 : nrow(PROBA)) {
+          #     for (k2 in 1 : nrow(MU)) {
+          #       PROBA[k1,j] <- PROBA[k1,j] +  MU[k2,k1] * RECOMB[k2,j]
+          #     }
+          #   }
+          # }
+
         
-        return(PROBA)
+        if (return_submatrices) return(list(RECOMB = RECOMB, MU = MU, PROBA = PROBA)) else return(PROBA)
         
     }
     
@@ -388,7 +405,7 @@ create.mat_geno_to_index_mapping <- function(allele_vec, Proba, index_matr) {
 }
 
 # initialize.multilocus
-initialize.multilocus <- function(allele_vec, r, mu=rep(0,length(allele_vec)), n, z, kappa0, init.state="fixed", sexuality=NULL) {
+initialize.multilocus <- function(allele_vec, r, mu=rep(0,length(allele_vec)), n, z, kappa0, init.state="fixed", sexuality=NULL, return_submatrices = F) {
     
     # allele_vec    Vector of number of alleles at each locus
     # r = 0.5       Recombination rate
@@ -404,7 +421,8 @@ initialize.multilocus <- function(allele_vec, r, mu=rep(0,length(allele_vec)), n
     # z=1
     # kappa0=100
     # init.state="fixed"
-    
+    # return_submatrices = F
+  
     # Checking
     # Number of loci
     if (!is.numeric(allele_vec)) stop("allele_vec must be a numeric vector")
@@ -415,7 +433,7 @@ initialize.multilocus <- function(allele_vec, r, mu=rep(0,length(allele_vec)), n
     if (r < 0 | r > 0.5) stop("The recombination rate must be 0 < r <= 0.5")
     if ( r < 0.5 & length(allele_vec) > 2 ) stop("If number of loci is >2, then recombination rate must be 0.5")
     # Method
-    if (r < 0.5) method <- "gamete" else method <- "genotype"
+    if (r < 0.5) method <- "gamete" else method <- "locus"
     # Sexuality
     if (is.null(sexuality)) {
         cat("Assuming monoecious, as sexuality is not specified \n")
@@ -428,8 +446,15 @@ initialize.multilocus <- function(allele_vec, r, mu=rep(0,length(allele_vec)), n
     cat("Generating genotype index \n")
     index_matr <- genotype.index.multilocus(allele_vec,r,method)
     cat("Generating meiosis matrix \n")
-    meiosis_matrix <- create.meiosis.matrix(index_matr, allele_vec, r, mu,method)
-    if (method == "genotype") {
+    ret_meiosis_matrix <- create.meiosis.matrix(index_matr, allele_vec, r, mu, method, return_submatrices)
+    if (return_submatrices && method == "gamete") {
+      meiosis_matrix <- ret_meiosis_matrix$PROBA
+      RECOMB <- ret_meiosis_matrix$RECOMB
+      MU <- ret_meiosis_matrix$MU
+    } else {
+      meiosis_matrix <- ret_meiosis_matrix
+    }
+    if (method == "locus") {
         cat("Generating genotype mapping \n")
         mat_geno_to_index_mapping <- create.mat_geno_to_index_mapping(allele_vec, meiosis_matrix, index_matr)
     } else {
@@ -475,6 +500,10 @@ initialize.multilocus <- function(allele_vec, r, mu=rep(0,length(allele_vec)), n
         names(out)[which(names(out) == "N1")] <- "N1_F"
         out$N1_M <- out$N1_F
     }
+    if (return_submatrices && method == "gamete") {
+      out$RECOMB <- RECOMB
+      out$MU <- MU
+    }
     return(out)
 }
 
@@ -482,12 +511,12 @@ initialize.multilocus <- function(allele_vec, r, mu=rep(0,length(allele_vec)), n
 # Type gamete define the number of gametes of each gametotype given by a genotype
 Type_gamete <- function(fec,Proba){
     
-    l <- dim(Proba)[1] 
-    m <- dim(Proba)[2]
+    l <- dim(Proba)[1] # Number of gametotypes
+    m <- dim(Proba)[2] # Number of genotypes
     
-    Gamete<-array(0,dim=c(l,m))
-    for (k in 1:m){
-        err<- try (as.vector(rmultinom(1,fec[k],Proba[,k])),silent=T) #meiose
+    Gamete <- array(0,dim = c(l,m))
+    for (k in 1 : m){
+        err <- try (as.vector(rmultinom(1, fec[k], Proba[,k])),silent=T) # meiosis
         if (class(err)=="try-error") {
             prob.mvr <- fec[k] * Proba[,k]				# Vector of means of the multivariate normal distribution
             var.mvr <- fec[k]* Proba[,k] * (1-Proba[,k])	# Vector of variances of the multivariate normal distribution
@@ -510,8 +539,8 @@ Type_gamete <- function(fec,Proba){
     return(type)
 }
 
-# Create mulòtilocus survival
-create.multilocus.survival <-function(allele_vec,init.par, n.sel, x, xi, surv.max, omega=1, T_max){
+# Create multilocus survival
+create.multilocus.survival <-function(allele_vec, init.par, n.sel, x, xi, surv.max, omega=1, T_max){
     # This function was used in Andrello et al, submitted to Mol Ecol Res
     # Checking
     # Number of loci
