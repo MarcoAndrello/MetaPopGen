@@ -3,7 +3,7 @@
 \alias{sim.metapopgen.dioecious.multilocus}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-  Main function to simulate metapopulation genetics\cr(multiple loci) 
+  Simulate metapopulation genetics (multiple loci) 
 }
 \description{
   Simulates the metapopulation genetics.
@@ -12,7 +12,7 @@
 sim.metapopgen.monoecious.multilocus(init.par,
                                     sigma,
                                     phi_F, phi_M,
-                                    delta, delta.ad,
+                                    delta.prop, delta.ad,
                                     recr.dd="settlers", kappa0,
                                     T_max,
                                     save.res=FALSE, save.res.T=seq(1:T_max),
@@ -21,7 +21,7 @@ sim.metapopgen.monoecious.multilocus(init.par,
 sim.metapopgen.dioecious.multilocus(init.par,
                                     sigma_F, sigma_M,
                                     phi_F, phi_M,
-                                    delta, delta.ad,
+                                    delta.prop, delta.ad,
                                     recr.dd="settlers", kappa0,
                                     T_max,
                                     save.res=FALSE, save.res.T=seq(1:T_max),
@@ -39,11 +39,11 @@ sim.metapopgen.dioecious.multilocus(init.par,
     Mean female fecundity. 4-D array of length c(m,n,z,T_max). \code{phi_F[j,i,x,t]} is the female fecundity for individuals of genotype \code{j}, age \code{x} in deme \code{i} at time \code{t}. Alternatively, \code{phi_F, phi_M} can be 
     a 3-D array of length c(m,n,z): this will be interpreted as female or male fecundities constant in time. Female fecundity is the per capita number of female gametes (eggs for animals, embrio sacs for plants). Male fecundity is the per capita number of male gametes (sperms for animals, pollen grains for plants). All the elements of \code{phi_F} and \code{phi_M} must be positive integers. Variation in fecundity among individuals follows a Poisson distribution.
   }
-  \item{delta}{
-    Dispersal probabilities for propagules. Square matrix of size \code{n*n}. \code{delta[i,j]} is the dispersal probability from deme \code{j} to deme \code{i} (see also Details). Alternatively, \code{delta} can be a 3-D array of length c(n,n,T_max): this will be interpreted as dispersal varying in time.
+  \item{delta.prop}{
+    Dispersal probabilities for propagules. Square matrix of size \code{n*n}. \code{delta.prop[i,j]} is the dispersal probability from deme \code{j} to deme \code{i} (see also Details). Alternatively, \code{delta.prop} can be a 3-D array of length c(n,n,T_max): this will be interpreted as dispersal varying in time.
   }
   \item{delta.ad}{
-    Dispersal probabilities for adults. Square matrix of size \code{n*n}. \code{delta.add[i,j]} is the dispersal probability from deme \code{j} to deme \code{i} (see also Details). Alternatively, \code{delta.ad} can be a 3-D array of length c(n,n,z): this will be interpreted as dispersal varying with age; or \code{delta.ad} can be a 4-D array of length c(n,n,z,T_max), which will be interpreted as dispersal varying with age and in time. To set dispersal probabilities constant with age and varying in time, use the 4-D format.
+    Dispersal probabilities for adults. Square matrix of size \code{n*n}. \code{delta.ad[i,j]} is the dispersal probability from deme \code{j} to deme \code{i} (see also Details). Alternatively, \code{delta.ad} can be a 3-D array of length c(n,n,z): this will be interpreted as dispersal varying with age; or \code{delta.ad} can be a 4-D array of length c(n,n,z,T_max), which will be interpreted as dispersal varying with age and in time. To set dispersal probabilities constant with age and varying in time, use the 4-D format.
   }
   \item{recr.dd}{
     Defines how settler survival probabilities depend on density. If "settlers" (default), settler survival probabilities depends on the number of settlers, through the function \code{\link[MetaPopGen:settler.survival]{settler.survival}}. If "adults", settler survival probabilities depends on the number of adults (all individuals already present in the deme): only up to \code{kappa0[i,t]}  individuals are allowed in a deme (see argument \code{kappa0}).
@@ -89,7 +89,7 @@ data("MultilocusMonoecious")
 N <- sim.metapopgen.monoecious.multilocus(init.par=init.par,
                                           sigma=sigma,
                                           phi_F=phi_F, phi_M=phi_M,
-                                          delta=delta, delta.ad=delta.ad,
+                                          delta.prop=delta.prop, delta.ad=delta.ad,
                                           T_max=T_max)
 
 }

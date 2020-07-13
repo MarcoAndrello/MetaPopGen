@@ -1,7 +1,7 @@
 sim.metapopgen.monoecious.multilocus <- function(init.par,
                                                  sigma,
                                                  phi_F, phi_M,
-                                                 delta = NULL, delta.ad = NULL,
+                                                 delta.prop = NULL, delta.ad = NULL,
                                                  recr.dd="settlers",
                                                  T_max,
                                                  save.res=F, save.res.T=seq(1:T_max),
@@ -24,13 +24,13 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
   }
   
   # .............................Check the existence of dispersal matrices
-  if (is.null(delta)) {
-      print("Setting propagule dispersal probability (delta)")
-      delta <- diag(1,n)
-      delta <- array(delta,c(n,n,T_max))
+  if (is.null(delta.prop)) {
+      print("Setting propagule dispersal probability (delta.prop)")
+      delta.prop <- diag(1,n)
+      delta.prop <- array(delta.prop,c(n,n,T_max))
   }
   if (is.null(delta.ad)) {
-      print("Setting adult dispersal probability (delta.add)")
+      print("Setting adult dispersal probability (delta.ad)")
       delta.ad <- diag(1,n)
       delta.ad <- array(delta.ad,c(n,n,z,T_max))
   }
@@ -59,9 +59,9 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
   }
   
   # Dispersal
-  if (is.na(dim(delta)[3])) {
-      print("Augmenting delta for time dimension")
-    delta <- array(rep(delta,T_max),c(n,n,T_max))
+  if (is.na(dim(delta.prop)[3])) {
+    print("Augmenting delta.prop for time dimension")
+    delta.prop <- array(rep(delta.prop,T_max),c(n,n,T_max))
   }
   
   # Adult dispersal
@@ -205,6 +205,7 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
       }
     }
     
+    # Adult dispersal
     if (verbose) cat("t =",t,"Apply adult dispersal function \n")
     for (i in 1 : n) {
         for (x in 1 : z) {
@@ -216,7 +217,7 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
         }
     } 
     
-    
+    # Reproduction
     if (verbose) cat("t =",t,"Apply reproduction function \n")
     # If there is only one age-class, we must force the third dimension
     if (length(dim(phi_F))==2) dim(phi_F)[3] <- 1
@@ -243,21 +244,21 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
       }
     }
     
-    
-    if (verbose) print("Apply dispersal function")
+    # Propagule dispersal
+    if (verbose) print("Apply propagule dispersal function")
     for (i in 1 : n) {
       for (k in 1 : m) {
         if (save.res) {
-          y = disp(L[k,i],delta[,i,t])
+          y = disp(L[k,i],delta.prop[,i,t])
           S[k,] <- S[k,] + y[1:n]       
         } else {
-          y = disp(L[k,i,t],delta[,i,t])
+          y = disp(L[k,i,t],delta.prop[,i,t])
           S[k,,t] <- S[k,,t] + y[1:n]
         }
       }
     }  
     
-    
+    # Recruitment
     if (verbose) print("Apply recruitment function")
     for (i in 1 : n) {
       if (save.res) {
