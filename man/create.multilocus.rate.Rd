@@ -48,7 +48,7 @@ If the number of biallelic loci under selection is n.sel, then there are \code{2
 
 }
 \value{
-Vital rates (survival probabilities or fecundities) to be used as input in \code{\link[MetaPopGen:sim.metapopgen.monoecious.multilocus]{sim.metapopgen.monoecious.multilocus}} and \code{\link[MetaPopGen:sim.metapopgen.dioecious.multilocus]{sim.metapopgen.dioecious.multilocus}}. 4-D array of length c(m,n,z,T_max). For example, \code{sigma[j,i,x,t]} is the survival probability for individuals of genotype \code{j}, age \code{x} in deme \code{i} at time \code{t}. 
+Vital rates (survival probabilities or fecundities) to be used as input in \code{\link[MetaPopGen:sim.metapopgen.monoecious.multilocus]{sim.metapopgen.monoecious.multilocus}} and \code{\link[MetaPopGen:sim.metapopgen.monoecious.multilocus]{sim.metapopgen.dioecious.multilocus}}. 4-D array of length c(m,n,z,T_max). For example, \code{sigma[j,i,x,t]} is the survival probability for individuals of genotype \code{j}, age \code{x} in deme \code{i} at time \code{t}. 
 }
 
 
