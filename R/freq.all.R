@@ -156,8 +156,6 @@ freq_alleles <- function(N,init.par,fG=NULL) {
   out
 }
 
-# Norig <- N
-# N <- Norig[,1,1,3]
-##
+
 
 
