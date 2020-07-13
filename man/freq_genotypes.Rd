@@ -1,16 +1,19 @@
 \name{freq_genotypes}
 \alias{freq_genotypes}
 \alias{freq_alleles}
+\alias{het_obs}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Genotype and allele frequencies 
+Genotype and allele frequencies, heterozygosities 
 }
 \description{
-Functions to calculate the frequencies of single-locus genotypes and single-locus alleles from a vector of numbers of individuals at each multilocus genotype.
+Functions to calculate the frequencies of single-locus genotypes, single-locus alleles and heterozygosities from a vector of numbers of individuals at each multilocus genotype.
 }
 \usage{
 freq_genotypes(N, init.par)
-freq_alleles(N, init.par, fG=NULL)
+freq_alleles(N, init.par, fG = NULL)
+het_obs(N, init.par, fG = NULL)
+het_exp(N, init.par, fA = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,12 +26,18 @@ A list of arguments necessary to initialize the simulations and obtained with th
   \item{fG}{
 The genotype frequencies that will be used to the calculate allele frequencies: the output of \code{freq_genotypes}. If \code{NULL}, the function will call \code{freq_genotypes}.
 }
+  \item{fA}{
+The allele frequencies that will be used to the calculate the expected heterozygosity: the output of \code{freq_alleles}. If \code{NULL}, the function will call \code{freq_alleles}.
+}
 }
 \details{
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
-Lists with two components. For \code{freq_genotypes}, the first component (\code{$counts}) is itself a list giving the genotype counts for each single-locus genotype at each locus. The second component (\code{$frequencies}) is like the first one, but giving frequencies instead of counts. For \code{freq_alleles}, the first component gives the allele counts and the second component gives the allele frequencies
+For \code{freq_genotypes}, a list with two components. The first component (\code{$counts}) is itself a list giving the genotype counts for each single-locus genotype at each locus. The second component (\code{$frequencies}) is like the first one, but giving frequencies instead of counts.\cr\cr
+For \code{freq_alleles}: as for \code{freq_genotypes}, but giving allele counts and allele frequencies instead of genotype counts and genotype frequencies.\cr\cr
+For \code{het_obs}, a vector of observed heterozygosities (ratio of number of heterozygotes to total number of individuals) per locus.\cr\cr
+For \code{het_exp}, a vector of expected heterozygosities per locus, calculated as 1 - sum(p^2), where p is the allele frequency and the sum is taken over all alleles at a locus.
 }
 \references{
 }
@@ -50,14 +59,20 @@ N <- sim.metapopgen.monoecious.multilocus(init.par=init.par,
 N_deme1_age1_time3 <- N[,1,1,3]
 
 # Genotype frequencies
-f_genotypes <- freq_genotypes(N_deme1_age1_time3, init.par)
-f_genotypes$counts
-f_genotypes$frequencies
+fG <- freq_genotypes(N_deme1_age1_time3, init.par)
+fG$counts
+fG$frequencies
 
 # Allele frequencies
 fA <- freq_alleles(N_deme1_age1_time3, init.par)
 # Equivalent but a bit faster:
 fA <- freq_alleles(N_deme1_age1_time3, init.par, fG)
+
+# Observed heterozygosity
+Ho <- het_obs(N_deme1_age1_time3, init.par, fG)
+
+# Expected heterozygosity
+He <- het_exp(N_deme1_age1_time3, init.par, fA)
 }
 }
 
