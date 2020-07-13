@@ -1,11 +1,42 @@
 # Multilocus functions
 
+# expand.grid.unique
+# def_genotype.name.locus
 # genotype.index.multilocus
 # create.meiosis.matrix
 # create.mat_geno_to_index_mapping
 # initialize.multilocus
 # Type_gamete
 # create.multilocus.survival
+
+
+# Function expand.grid.unique found on stack.overflow from user Ferdinand.kraft
+# https://stackoverflow.com/questions/17171148/non-redundant-version-of-expand-grid
+# It is used to couple the alleles of the same locus to form unique genotypes
+expand.grid.unique <- function(x, y, include.equals=TRUE) {
+  x <- unique(x)
+  y <- unique(y)
+  g <- function(i) {
+    z <- setdiff(y, x[seq_len(i-include.equals)])
+    if(length(z)) cbind(x[i], z, deparse.level=0)
+  }
+  do.call(rbind, lapply(seq_along(x), g))
+}
+
+# Define genotype names for each locus
+def_genotype.name.locus <- function(allele_vec){
+  genotype.name.locus <- list() # For each locus (dimension), define the names of the single-locus genotypes
+  for (loc in 1 : nloc) {
+    alleles <- vector("character",allele_vec[loc])
+    for (i in 1 : allele_vec[loc]){
+      alleles[i] <- paste0(LETTERS[loc],i)
+    }
+    genotype.name.locus[[loc]] <- apply(
+      expand.grid.unique(alleles, alleles),
+      1,paste0,collapse="")
+  }
+  genotype.name.locus
+}
 
 genotype.index.multilocus <- function(allele_vec,r,method){
     
@@ -31,7 +62,7 @@ genotype.index.multilocus <- function(allele_vec,r,method){
     
     # Two methods
     # 1) gamete-based: gives a a 2*2 matrix
-    # 2) genotype-based: gives a nloc-dimensional array
+    # 2) locus-based: gives a nloc-dimensional array
     
     
     # 1) gamete-based
@@ -85,20 +116,9 @@ genotype.index.multilocus <- function(allele_vec,r,method){
         
     }
     
-    # 2) Genotype-based
+    # 2) Locus-based
     if ( method == "locus") {    
-        # Function expand.grid.unique found on stack.overflow from user Ferdinand.kraft
-        # https://stackoverflow.com/questions/17171148/non-redundant-version-of-expand-grid
-        # It is used to couple the alleles of the same locus to form unique genotypes
-        expand.grid.unique <- function(x, y, include.equals=TRUE) {
-            x <- unique(x)
-            y <- unique(y)
-            g <- function(i) {
-                z <- setdiff(y, x[seq_len(i-include.equals)])
-                if(length(z)) cbind(x[i], z, deparse.level=0)
-            }
-            do.call(rbind, lapply(seq_along(x), g))
-        }
+
         nloc <- length(allele_vec)
         # Number of single-locus genotypes per locus
         m.locus <- vector()  
@@ -109,17 +129,7 @@ genotype.index.multilocus <- function(allele_vec,r,method){
         y <- aperm(y,c(nloc:1))                      # To ensure that former loci vary more slowly
         
         # Define dimnames
-        genotype.name.locus <- list() # For each locus (dimension), define the names of the single-locus genotypes
-        for (loc in 1 : nloc) {
-            alleles <- vector("character",allele_vec[loc])
-            for (i in 1 : allele_vec[loc]){
-                alleles[i] <- paste0(LETTERS[loc],i)
-            }
-            genotype.name.locus[[loc]] <- apply(
-                expand.grid.unique(alleles, alleles),
-                1,paste0,collapse="")
-        }
-        dimnames(y) <- genotype.name.locus
+        dimnames(y) <- def_genotype.name.locus(allele_vec)
         
     } 
     return(y)
@@ -170,14 +180,13 @@ create.meiosis.matrix <- function(index_matr, allele_vec, r=0.5, mu, method, ret
             pos.geno <- which(index_matr==i.geno,arr.ind=T)
             allele_locus_1[[i.geno]] <- allele_locus_2[[i.geno]] <- vector()
             for (i.locus in 1 : length(pos.geno)) {
-                allele_locus_1[[i.geno]][i.locus] <- substr( dimnames(index_matr)[[i.locus]][pos.geno[i.locus]],1,2) # Solo per < 10 alleli
-                allele_locus_2[[i.geno]][i.locus] <- substr( dimnames(index_matr)[[i.locus]][pos.geno[i.locus]],3,4) # Solo per < 10 alleli
+                allele_locus_1[[i.geno]][i.locus] <- substr( dimnames(index_matr)[[i.locus]][pos.geno[i.locus]],1,2) # Only for < 10 alleles
+                allele_locus_2[[i.geno]][i.locus] <- substr( dimnames(index_matr)[[i.locus]][pos.geno[i.locus]],3,4) # Only for < 10 alleles
             }
             allele_multi_1 <- paste0(allele_locus_1[[i.geno]],collapse="")
             allele_multi_2 <- paste0(allele_locus_2[[i.geno]],collapse="")
             genotype.names[i.geno] <- paste0(allele_multi_1,"/",allele_multi_2)
         }
-        
         
         # Set up the list containing, for each locus, the contribution of each allele to each gametotype (as a matrix)
         contr_matr <- list() #  Each element of the list corresponds to a locus, and is a matrix with allele_vec[i.locus] columns
@@ -406,105 +415,110 @@ create.mat_geno_to_index_mapping <- function(allele_vec, Proba, index_matr) {
 
 # initialize.multilocus
 initialize.multilocus <- function(allele_vec, r, mu=rep(0,length(allele_vec)), n, z, kappa0, init.state="fixed", sexuality=NULL, return_submatrices = F) {
-    
-    # allele_vec    Vector of number of alleles at each locus
-    # r = 0.5       Recombination rate
-    # mu            Vector giving the mutation rate at each locus
-    # n             Number of demes
-    # z             Number of age.classes
-    # kappa0        Number of individual per deme (can be a vector of length n)
-    # init.state    Can be "fixed" or "random"
-    # allele_vec=c(2,3)
-    # r=0.5
-    # mu=rep(0.01,length(allele_vec))
-    # n=3
-    # z=1
-    # kappa0=100
-    # init.state="fixed"
-    # return_submatrices = F
   
-    # Checking
-    # Number of loci
-    if (!is.numeric(allele_vec)) stop("allele_vec must be a numeric vector")
-    if (length(allele_vec) > 26) stop("The length of allele_vec must be between 2 and 26")
-    if (length(allele_vec)<2) stop("The length of allele_vec must be between 2 and 26")
-    # Recombination rate
-    if (length(r) > 1) stop("The recombination rate must be a single number")
-    if (r < 0 | r > 0.5) stop("The recombination rate must be 0 < r <= 0.5")
-    if ( r < 0.5 & length(allele_vec) > 2 ) stop("If number of loci is >2, then recombination rate must be 0.5")
-    # Method
-    if (r < 0.5) method <- "gamete" else method <- "locus"
-    # Sexuality
-    if (is.null(sexuality)) {
-        cat("Assuming monoecious, as sexuality is not specified \n")
-        sexuality <- "monoecious"
-    }
-    if (all(sexuality != "monoecious" && sexuality != "dioecious")) {
-        stop("Sexuality must be either 'monoecious' or 'dioecious' \n")
-    }
-    
-    cat("Generating genotype index \n")
-    index_matr <- genotype.index.multilocus(allele_vec,r,method)
-    cat("Generating meiosis matrix \n")
-    ret_meiosis_matrix <- create.meiosis.matrix(index_matr, allele_vec, r, mu, method, return_submatrices)
-    if (return_submatrices && method == "gamete") {
-      meiosis_matrix <- ret_meiosis_matrix$PROBA
-      RECOMB <- ret_meiosis_matrix$RECOMB
-      MU <- ret_meiosis_matrix$MU
-    } else {
-      meiosis_matrix <- ret_meiosis_matrix
-    }
-    if (method == "locus") {
-        cat("Generating genotype mapping \n")
-        mat_geno_to_index_mapping <- create.mat_geno_to_index_mapping(allele_vec, meiosis_matrix, index_matr)
-    } else {
-        mat_geno_to_index_mapping <- NULL
-    }
-    
-    
-    cat("Generating N1 \n")
-    if (sexuality == "monoecious") n.sexes <- 1 else n.sexes <- 2
-    m <- dim(meiosis_matrix)[2] # Number of multilocus genotypes
-    if (init.state == "fixed") {
-        N1 <- array(round(kappa0/(m*z*n.sexes)),dim=c(m,n,z))
-    }
-    if (init.state == "random") {
-        # Random in all demes
-        N1 <- array(0,dim=c(m,n,z))
-        for (deme in 1 : n){
-            for (age in 1 : z) {
-                for (genotype in 1 : m) {
-                    N1[genotype,deme,age] <- round(runif(1)*((kappa0*2)/(m*z*n.sexes))) # Expected value of runif is 0.5, so I multiply kappa0 by 2. What is k??
-                }
-            }
+  # allele_vec    Vector of number of alleles at each locus
+  # r = 0.5       Recombination rate
+  # mu            Vector giving the mutation rate at each locus
+  # n             Number of demes
+  # z             Number of age.classes
+  # kappa0        Number of individual per deme (can be a vector of length n)
+  # init.state    Can be "fixed" or "random"
+  # allele_vec=c(2,3)
+  # r=0.5
+  # mu=rep(0.01,length(allele_vec))
+  # n=3
+  # z=1
+  # kappa0=100
+  # init.state="fixed"
+  # return_submatrices = F
+  
+  # Checking
+  
+  # Number of loci
+  if (!is.numeric(allele_vec)) stop("allele_vec must be a numeric vector")
+  if (length(allele_vec) > 26) stop("The length of allele_vec must be between 2 and 26")
+  if (length(allele_vec)<2) stop("The length of allele_vec must be between 2 and 26")
+  # Length of mu and allele_vec
+  if (length(allele_vec) != length(mu)) stop("allele_vec and mu must have the same length")
+  # Recombination rate
+  if (length(r) > 1) stop("The recombination rate must be a single number")
+  if (r < 0 | r > 0.5) stop("The recombination rate must be 0 < r <= 0.5")
+  if ( r < 0.5 & length(allele_vec) > 2 ) stop("If number of loci is >2, then recombination rate must be 0.5")
+  # Method
+  if (r < 0.5) method <- "gamete" else method <- "locus"
+  # Sexuality
+  if (is.null(sexuality)) {
+    cat("Assuming monoecious, as sexuality is not specified \n")
+    sexuality <- "monoecious"
+  }
+  if (all(sexuality != "monoecious" && sexuality != "dioecious")) {
+    stop("Sexuality must be either 'monoecious' or 'dioecious' \n")
+  }
+  
+  cat("Generating genotype index \n")
+  index_matr <- genotype.index.multilocus(allele_vec,r,method)
+  cat("Generating meiosis matrix \n")
+  ret_meiosis_matrix <- create.meiosis.matrix(index_matr, allele_vec, r, mu, method, return_submatrices)
+  if (return_submatrices && method == "gamete") {
+    meiosis_matrix <- ret_meiosis_matrix$PROBA
+    RECOMB <- ret_meiosis_matrix$RECOMB
+    MU <- ret_meiosis_matrix$MU
+  } else {
+    meiosis_matrix <- ret_meiosis_matrix
+  }
+  if (method == "locus") {
+    cat("Generating genotype mapping \n")
+    mat_geno_to_index_mapping <- create.mat_geno_to_index_mapping(allele_vec, meiosis_matrix, index_matr)
+  } else {
+    mat_geno_to_index_mapping <- NULL
+  }
+  
+  
+  cat("Generating N1 \n")
+  if (sexuality == "monoecious") n.sexes <- 1 else n.sexes <- 2
+  m <- dim(meiosis_matrix)[2] # Number of multilocus genotypes
+  if (init.state == "fixed") {
+    N1 <- array(round(kappa0/(m*z*n.sexes)),dim=c(m,n,z))
+  }
+  if (init.state == "random") {
+    # Random in all demes
+    N1 <- array(0,dim=c(m,n,z))
+    for (deme in 1 : n){
+      for (age in 1 : z) {
+        for (genotype in 1 : m) {
+          N1[genotype,deme,age] <- round(runif(1)*((kappa0*2)/(m*z*n.sexes))) # Expected value of runif is 0.5, so I multiply kappa0 by 2. What is k??
         }
+      }
     }
-
-    # Adding dimanames to N1
-    dimnames(N1) <- list(genotype = colnames(meiosis_matrix),
-                         deme = c(1:n),
-                         age = c(1:z))
-    
-    cat("Done")
-    out <- list(r = r,
-                mu = mu,
-                m = dim(meiosis_matrix)[2],
-                n = n,
-                z = z,
-                kappa0 = kappa0,
-                index_matr = index_matr,
-                meiosis_matrix = meiosis_matrix,
-                mat_geno_to_index_mapping = mat_geno_to_index_mapping,
-                N1 = N1)
-    if (sexuality == "dioecious") {
-        names(out)[which(names(out) == "N1")] <- "N1_F"
-        out$N1_M <- out$N1_F
-    }
-    if (return_submatrices && method == "gamete") {
-      out$RECOMB <- RECOMB
-      out$MU <- MU
-    }
-    return(out)
+  }
+  
+  # Adding dimanames to N1
+  dimnames(N1) <- list(genotype = colnames(meiosis_matrix),
+                       deme = c(1:n),
+                       age = c(1:z))
+  
+  cat("Done")
+  out <- list(allele_vec = allele_vec,
+              r = r,
+              mu = mu,
+              m = dim(meiosis_matrix)[2],
+              n = n,
+              z = z,
+              kappa0 = kappa0,
+              index_matr = index_matr,
+              meiosis_matrix = meiosis_matrix,
+              mat_geno_to_index_mapping = mat_geno_to_index_mapping,
+              N1 = N1,
+              method = method)
+  if (sexuality == "dioecious") {
+    names(out)[which(names(out) == "N1")] <- "N1_F"
+    out$N1_M <- out$N1_F
+  }
+  if (return_submatrices && method == "gamete") {
+    out$RECOMB <- RECOMB
+    out$MU <- MU
+  }
+  return(out)
 }
 
 
