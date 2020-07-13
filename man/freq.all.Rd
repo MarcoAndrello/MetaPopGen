@@ -2,7 +2,7 @@
 \alias{freq.all}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Calculating allele frequencies 
+Allele frequencies
 }
 \description{
 This function calculates allele frequencies from a vector of numbers of individuals of each genotype at one locus.
@@ -28,6 +28,7 @@ A vector of allele frequencies.
 \note{
 }
 \seealso{
+\code{\link{freq_genotypes}} and \code{\link{freq_alleles}} to calculate genotype and allele frequencies in multi-locus simulations
 }
 \examples{
 N <- c(30,50,20) # Means that there are 30 A1A1, 50 A1A2 AND 20 A2A2
