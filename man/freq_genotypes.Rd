@@ -1,19 +1,19 @@
 \name{freq_genotypes}
 \alias{freq_genotypes}
 \alias{freq_alleles}
-\alias{het_obs}
+\alias{freq_gametes}
+
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Genotype and allele frequencies, heterozygosities 
+Genotype, allele and gamete frequencies
 }
 \description{
-Functions to calculate the frequencies of single-locus genotypes, single-locus alleles and heterozygosities from a vector of numbers of individuals at each multilocus genotype.
+Functions to calculate the frequencies of single-locus genotypes, the frequencies of single-locus alleles and the frequencies of multi-locus gametes. The input is the vector of numbers of individuals at each multilocus genotype.
 }
 \usage{
 freq_genotypes(N, init.par)
 freq_alleles(N, init.par, fG = NULL)
-het_obs(N, init.par, fG = NULL)
-het_exp(N, init.par, fA = NULL)
+freq_gametes(N, init.par)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -21,25 +21,22 @@ het_exp(N, init.par, fA = NULL)
 Vector (1-D array) giving the number of individuals of each multilocus genotype. Typically this is obtained from the output of a multilocus simulation by subsetting a single deme / age class / time step. See the example.
 }
   \item{init.par}{
-A list of arguments necessary to initialize the simulations and obtained with the function initialize.monoecious.multilocus. It must be the same list that has been used to simulate \code{N}
+A list of arguments necessary to initialize the simulations and obtained with the function initialize.monoecious.multilocus. It must be the same list that has been used to simulate \code{N}.
 }
   \item{fG}{
 The genotype frequencies that will be used to the calculate allele frequencies: the output of \code{freq_genotypes}. If \code{NULL}, the function will call \code{freq_genotypes}.
 }
-  \item{fA}{
-The allele frequencies that will be used to the calculate the expected heterozygosity: the output of \code{freq_alleles}. If \code{NULL}, the function will call \code{freq_alleles}.
-}
 }
 \details{
-%%  ~~ If necessary, more details than the description above ~~
+When the recombination rate \code{r} = 0.5, the loci are independent and MetaPopGen uses a memory-efficient storing method for genotypes that does not consider phasing ("locus-based" method, see Andrello et al. under review). For example, the two genotypes A1B1/A2B2 and A1B2/A2B1 are pooled into the same genotype A1B1/A2B2 because they are equivalent in terms of multi-locus gamete production. The computation of gamete frequencies is affected by this loss of information, as the A1B1/A2B2 genotype could be formed i) by gametes A1B1 and A2B2 (with probability 0.5) or ii) by gametes A1B2 and A2B1 (with probability 0.5). The gamete counts obtained by \code{freq_gametes} are calculated considering these probabilities, thus might not be integers. Conversely, when \code{r} < 0.5 (linked loci), the loci are non-independent (linked) and MetaPopGen uses a storing method for genotypes that considers phasing ("gamete-based" method). In this case, the gamete counts obtained by \code{freq_gametes} are calculated by counting the gametes forming the phased genotypes and are always integers.  
 }
 \value{
 For \code{freq_genotypes}, a list with two components. The first component (\code{$counts}) is itself a list giving the genotype counts for each single-locus genotype at each locus. The second component (\code{$frequencies}) is like the first one, but giving frequencies instead of counts.\cr\cr
 For \code{freq_alleles}: as for \code{freq_genotypes}, but giving allele counts and allele frequencies instead of genotype counts and genotype frequencies.\cr\cr
-For \code{het_obs}, a vector of observed heterozygosities (ratio of number of heterozygotes to total number of individuals) per locus.\cr\cr
-For \code{het_exp}, a vector of expected heterozygosities per locus, calculated as 1 - sum(p^2), where p is the allele frequency and the sum is taken over all alleles at a locus.
+For \code{freq_gametes}, a list with two components. The first component (\code{$counts}) is a vector of gamete counts and the second component (\code{$frequencies}) is a vector of gamete frequencies.\cr\cr
 }
 \references{
+Andrello M, Noirot C, Debarre F and Manel S. (under review). METAPOPGEN 2.0: a multi-locus genetic simulator to model populations of large size. Molecular Ecology Resources **Issue**, pp-pp.
 }
 \author{Marco Andrello}
 \note{
@@ -68,11 +65,8 @@ fA <- freq_alleles(N_deme1_age1_time3, init.par)
 # Equivalent but a bit faster:
 fA <- freq_alleles(N_deme1_age1_time3, init.par, fG)
 
-# Observed heterozygosity
-Ho <- het_obs(N_deme1_age1_time3, init.par, fG)
-
-# Expected heterozygosity
-He <- het_exp(N_deme1_age1_time3, init.par, fA)
+# Gamete frequencies
+fgam <- freq_alleles(N_deme1_age1_time3, init.par)
 }
 }
 

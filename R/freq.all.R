@@ -35,6 +35,8 @@ freq_genotypes <- function(N, init.par) {
   # Check if N has names...
   if (is.null(names(N))) stop("N must be a named vector. Multilocus simulations with MetaPopGen return named objects. You must have done something wrong!")
   
+  if (!init.par$method %in% c("gamete","locus")) stop("init.par$method must be either \"gamete\" or \"locus\"")
+  
   if (init.par$method == "locus") {
     # Check no more than 26 loci...
     if (length(init.par$allele_vec) > 26) stop("Not yet implemented for more than 26 loci")

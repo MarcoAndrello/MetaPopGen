@@ -26,7 +26,7 @@ expand.grid.unique <- function(x, y, include.equals=TRUE) {
 # Define genotype names for each locus
 def_genotype.name.locus <- function(allele_vec){
   genotype.name.locus <- list() # For each locus (dimension), define the names of the single-locus genotypes
-  for (loc in 1 : nloc) {
+  for (loc in 1 : length(allele_vec)) {
     alleles <- vector("character",allele_vec[loc])
     for (i in 1 : allele_vec[loc]){
       alleles[i] <- paste0(LETTERS[loc],i)
@@ -383,7 +383,7 @@ create.mat_geno_to_index_mapping <- function(allele_vec, Proba, index_matr) {
     
     # mat_geno_to_index_mapping : una tabella di corrispondenza tra la matrice mat_geno (2*2, femmine*maschi) e il numero del genotipo multilocus dato da index_matr, che ? quello in cui i genotipi sono salvati in metapopgen
     # viene creata offline all'inizio delle simulazioni
-    # Sarebbe valida anchebcon il method "old" ?
+    # Sarebbe valida anche con il method "old" ?
     
     nloc <- length(allele_vec) # nloc is the number of loci
     l <- dim(Proba)[1] # l is the number of gametotypes
