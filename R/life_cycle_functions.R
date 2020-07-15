@@ -100,6 +100,7 @@ repr <- function(Nprime_F, Nprime_M=NULL, phi_F, phi_M, l, m, z, Proba, mat_geno
     if (is.null(dim(Nprime_M))) dim(Nprime_M) <- c(length(Nprime_M),1)
     if (is.null(dim(phi_F))) dim(phi_F) <- c(length(phi_F),1)
     if (is.null(dim(phi_M))) dim(phi_M) <- c(length(phi_M),1)
+    
     # Calculate number of female gametes for each gametype
     fecx <- array(0,dim=c(m,z))	# Number of female gametes produced by all the individuals of each genotype in each age class
     fec  <- array(0,dim=m)	    # Number of female gametes produced by all the individuals of each genotype
@@ -110,6 +111,7 @@ repr <- function(Nprime_F, Nprime_M=NULL, phi_F, phi_M, l, m, z, Proba, mat_geno
         fec[k] <- sum(fecx[k,])
     }
     G_F <-Type_gamete(fec,Proba)
+    
     # Calculate number of male gametes for each gametype
     fecx <- array(0,dim=c(m,z))	# Number of male gametes produced by all the individuals of each genotype in each age class
     fec  <- array(0,dim=m)		# Number of male gametes produced by all the individuals of each genotype
@@ -120,8 +122,10 @@ repr <- function(Nprime_F, Nprime_M=NULL, phi_F, phi_M, l, m, z, Proba, mat_geno
         fec[k] <- sum(fecx[k,])
     }
     G_M <- Type_gamete(fec,Proba)
+    
     # Union of gametes to form zygotes
     mat_geno <- union.gametes(G_M, G_F, l)
+    
     # Calculate genotype numbers in propagules L by adding the combinations of gametotypes
     # to see which gametotype is which: rownames(mat_geno) <- colnames(mat_geno) <- rownames(Proba)
     L <- rep(0,m)
