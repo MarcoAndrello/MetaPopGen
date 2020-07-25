@@ -40,7 +40,7 @@ freq_genotypes <- function(N, init.par) {
   if (init.par$method == "locus") {
     # Check no more than 26 loci...
     if (length(init.par$allele_vec) > 26) stop("Not yet implemented for more than 26 loci")
-    nLoc <- length(allele_vec)
+    nLoc <- length(init.par$allele_vec)
     # Set genotype_counts vectors, one per locus
     genotype_counts <- list()
     for (i.locus in 1 : nLoc){
@@ -69,7 +69,7 @@ freq_genotypes <- function(N, init.par) {
     names_multilocus_genotypes <- names(N)
     
     # Correspondence to single-locus genotypes
-    if(any(allele_vec>9)) stop("More than 10 alleles per locus is not implemented yet")
+    if(any(init.par$allele_vec>9)) stop("More than 10 alleles per locus is not implemented yet")
     
     multi_to_single_geno <- list()
     # First locus
@@ -123,7 +123,7 @@ freq_alleles <- function(N,init.par,fG=NULL) {
   allele_counts <- list()
   nLoc <- length(init.par$allele_vec)
   for (i.locus in 1 : nLoc) {
-    allele_counts[[i.locus]] <- rep(0, allele_vec[i.locus])
+    allele_counts[[i.locus]] <- rep(0, init.par$allele_vec[i.locus])
     names_genotypes <- names(fG$counts[[i.locus]])
     
     # Use package "genetics" to find allele counts per genotype
@@ -137,7 +137,7 @@ freq_alleles <- function(N,init.par,fG=NULL) {
     # Add genotype name (not needed, just for clarity in debugging)
     # rownames(allele_counts_per_genotype) <- names_genotypes
     
-    num_alleles_per_locus <- allele_vec[i.locus]
+    num_alleles_per_locus <- init.par$allele_vec[i.locus]
     for (i.allele in 1 : num_alleles_per_locus) {
       allele_counts[[i.locus]][i.allele] <- sum(allele_counts_per_genotype[,i.allele] * fG$counts[[i.locus]])
     }

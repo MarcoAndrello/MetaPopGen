@@ -246,7 +246,7 @@ sim.metapopgen.dioecious.multilocus <- function(init.par,
           L_F[,i] = 0
           next
         } else {
-          LL <- repr(Nprimeprime_F[,i,],Nprimeprime_M[,i,],phi_F[,i,,t],phi_M[,i,,t],l,m,meiosis_matrix)
+          LL <- repr(Nprimeprime_F[,i,], Nprimeprime_M[,i,], phi_F[,i,,t], phi_M[,i,,t], l, m, z, meiosis_matrix, mat_geno_to_index_mapping)
           L_M[,i] <- LL[,1]
           L_F[,i] <- LL[,2]
           rm(LL)
@@ -257,7 +257,7 @@ sim.metapopgen.dioecious.multilocus <- function(init.par,
           L_F[,i,t] = 0
           next
         } else {
-          LL <- repr(Nprimeprime_F[,i,],Nprimeprime_M[,i,],phi_F[,i,,t],phi_M[,i,,t],l,m,meiosis_matrix)
+          LL <- repr(Nprimeprime_F[,i,], Nprimeprime_M[,i,], phi_F[,i,,t], phi_M[,i,,t], l, m, z, meiosis_matrix, mat_geno_to_index_mapping)
           L_M[,i,t] <- LL[,1]
           L_F[,i,t] <- LL[,2]
         }

@@ -2,7 +2,7 @@
 
 # Observed heterozygosity
 het_obs <- function(N, init.par, fG = NULL) {
-  nLoc <- length(allele_vec)
+  nLoc <- length(init.par$allele_vec)
   if(is.null(fG)) {
     fG <- freq_genotypes(N,init.par)
   }
@@ -24,7 +24,7 @@ het_obs <- function(N, init.par, fG = NULL) {
 
 # Expected heterozygosity
 het_exp <- function(N, init.par, fA = NULL) {
-  nLoc <- length(allele_vec)
+  nLoc <- length(init.par$allele_vec)
   if(is.null(fA)) {
     fA <- freq_alleles(N,init.par)
   }

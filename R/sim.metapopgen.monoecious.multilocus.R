@@ -229,7 +229,7 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
           L[,i] = 0
           next
         } else {
-          L[,i] <- repr(Nprimeprime[,i,],NULL,phi_F[,i,,t],phi_M[,i,,t],l,m,z,meiosis_matrix,mat_geno_to_index_mapping)
+          L[,i] <- repr(Nprimeprime[,i,], NULL, phi_F[,i,,t], phi_M[,i,,t], l, m, z, meiosis_matrix, mat_geno_to_index_mapping)
         }
         
       } else {
@@ -238,7 +238,7 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
           L[,i,t] = 0
           next
         } else {
-          L[,i,t] <- repr(Nprimeprime[,i,],NULL,phi_F[,i,,t],phi_M[,i,,t],l,m,z,meiosis_matrix,mat_geno_to_index_mapping)
+          L[,i,t] <- repr(Nprimeprime[,i,], NULL, phi_F[,i,,t], phi_M[,i,,t], l, m, z, meiosis_matrix, mat_geno_to_index_mapping)
         }
         
       }
