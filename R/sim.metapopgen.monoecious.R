@@ -243,56 +243,6 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
     }
   
   
-  
-  # Recruitment
-  # S        Number of settlers of all genotypes. Dimension: m
-  # N        Number of adults of all genotyps and age-classes. Dimensions: m*z
-  # m        Number of genotypes
-  # kappa0   Carrying capacity. Scalar.
-  # recr.dd  String
-  # S[,i],Nprime[,i,],m,kappa0[i,t],recr.dd
-  #S <- S[,i]
-  #N <- Nprime[,i,]
-  #kappa0 <- kappa0[i,t]
-  recr <-
-    function(S,N,m,kappa0,recr.dd) {
-      switch(recr.dd,
-             
-             # Dependence on settler density
-             settlers = {
-               Ntot <- sum(S)
-               sigma0 <- settler.survival(Ntot,kappa0)
-             },
-             
-             # Dependence on adult density
-             adults = {
-               if (z==1) Ntot <- 0 else Ntot <- sum(N[,1:(z-1)]) # Does not count z because they will "shift out" with the aging function
-               Stot <- sum(S)
-               Recr <- kappa0 - Ntot
-               
-               if (Recr <= 0){
-                 sigma0 <- 0
-               } else {
-                 sigma0 <- Recr / Stot
-               }
-               
-               if (sigma0 > 1) sigma0 <- 1
-              },
-             
-             # No-match: error
-             stop("Unknown value for argument recr.dd. Valid values: 'settlers', 'adults'")
-      )
-      
-      # Use recruitment probability to calculate the number of recruits
-      R <- array(0,dim=m)
-      for (k in 1 : m) {
-        R[k] <- rbinom(1,S[k],sigma0)
-      }
-      return(R)
-    }
-
-  
-  
   ##########################################################################
   
   # Simulate metapopulation genetics
@@ -312,9 +262,8 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
   print("Running simulation...")
   for (t in 1 : (T_max-1)) {
     
-    print(t)
-    
-    
+    if (t %% 10 == 0) print(t)
+
     # At each time-step, redefine variable Nprime
     # If save.res, redefine also larval and settlers numbers
     if (save.res) {
@@ -395,25 +344,24 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
     if (verbose) print("Apply recruitment function")
     for (i in 1 : n) {
       if (save.res) {
-        N[,i,1] <- recr(S[,i],Nprime[,i,],m,kappa0[i,t],recr.dd)
+        N[,i,] <- recr(N = array(Nprime[,i,], dim=c(m,z)),
+                        S = array(S[,i], dim=c(m,1)),
+                        m = m,
+                        z = z,
+                        kappa0 = kappa0[i,t],
+                        recr.dd = recr.dd,
+                        sexuality="monoecious")
       } else {
-        N[,i,1,t+1] <- recr(S[,i,t],Nprime[,i,],m,kappa0[i,t],recr.dd)
+        N[,i,,t+1] <- recr(N = array(Nprime[,i,], dim=c(m,z)),
+                            S = array(S[,i,t], dim=c(m,1)),
+                            m = m,
+                            z = z,
+                            kappa0 = kappa0[i,t],
+                            recr.dd = recr.dd,
+                            sexuality = "monoecious")
       }
     }
     
-    if (verbose) print("Calculates N at t+1")
-    for (i in 1 : n){
-      for (x in 1 : z) {
-        if (x == 1) next
-        for (k in 1 : m) {
-          if (save.res) {
-            N[k,i,x] <- Nprime[k,i,x-1]
-          } else {
-            N[k,i,x,t+1] <- Nprime[k,i,x-1]
-          }
-        }
-      }
-    }
     
     # Save results if save.res=T
     if (save.res){

@@ -113,48 +113,6 @@ sim.metapopgen.dioecious.multilocus <- function(init.par,
   }
   
   ##########################################################################
-  # Define functions
-  ##########################################################################
-  
-  # Recruitment:
-  # S_M[,i],S_F[,i],Nprime_M[,i,],Nprime_F[,i,],m,kappa0[i,t]
-  # S, S_othersex.  Number of settlers of all genotypes. Dimension: m
-  # N_M, N_F.       Number of adults of all genotyps and age-classes. Dimensions: n*z
-  # m.              Number of genotypes
-  # kappa0.         Carrying capacity. Scalar.
-  recr <-
-    function(S,S_othersex,N_M,N_F,m,kappa0,recr.dd) {
-      switch(recr.dd,
-             # Dependence on settler density
-             settlers = {
-               Ntot <- sum(S+S_othersex)
-               sigma0 <- settler.survival(Ntot,kappa0)
-             },
-             # Dependence on adult density
-             adults = {
-               if (z==1) Ntot <- 0 else Ntot <- sum(N_M[,1:(z-1)] + N_F[,1:(z-1)])
-               Stot <- sum(S+S_othersex)
-               Recr <- kappa0 - Ntot
-               if (Recr <= 0){
-                 sigma0 <- 0
-               } else {
-                 sigma0 <- Recr / Stot
-               }
-               if (sigma0 > 1) sigma0 <- 1
-             },
-             # No-match: error
-             stop("Unknown value for argument recr.dd. Valid values: 'settlers', 'adults'")
-      )
-      
-      # Use recruitment Probability to calculate the number of recruits
-      R <- array(0,dim=m)
-      for (k in 1 : m) {
-        R[k] <- rbinom(1,S[k],sigma0)
-      }
-      return(R)
-    }
-  
-  ##########################################################################
   # Simulate metapopulation genetics
   ##########################################################################
   if (save.res){
@@ -286,27 +244,30 @@ sim.metapopgen.dioecious.multilocus <- function(init.par,
     if (verbose) cat("t =",t,"Apply recruitment function \n")
     for (i in 1 : n) {
       if (save.res) {
-        N_M[,i,1] <- recr(S_M[,i],S_F[,i],Nprimeprime_M[,i,],Nprimeprime_F[,i,],m,kappa0[i,t],recr.dd)  # Pass the abundance of other classes too
-        N_F[,i,1] <- recr(S_F[,i],S_M[,i],Nprimeprime_M[,i,],Nprimeprime_F[,i,],m,kappa0[i,t],recr.dd)
+        Naged <- recr(N_F = array(Nprimeprime_F[,i,], dim=c(m,z)),
+                      N_M = array(Nprimeprime_M[,i,], dim=c(m,z)),
+                      S_F = array(S_F[,i], dim=c(m,1)),
+                      S_M = array(S_M[,i], dim=c(m,1)),
+                      m = m,
+                      z = z,
+                      kappa0 = kappa0[i,t],
+                      recr.dd = recr.dd,
+                      sexuality = "dioecious")
+        N_F[,i,] <- Naged[,,1]
+        N_M[,i,] <- Naged[,,2]
+        
       } else {
-        N_M[,i,1,t+1] <- recr(S_M[,i,t],S_F[,i,t],Nprimeprime_M[,i,],Nprimeprime_F[,i,],m,kappa0[i,t],recr.dd)
-        N_F[,i,1,t+1] <- recr(S_F[,i,t],S_M[,i,t],Nprimeprime_M[,i,],Nprimeprime_F[,i,],m,kappa0[i,t],recr.dd)
-      }
-    }
-    
-    if (verbose) cat("t =",t,"Calculating N at t+1 \n")
-    for (i in 1 : n){
-      for (x in 1 : z) {
-        if (x == 1) next
-        for (k in 1 : m) {
-          if (save.res) {
-            N_M[k,i,x] <- Nprimeprime_M[k,i,x-1]
-            N_F[k,i,x] <- Nprimeprime_F[k,i,x-1]
-          } else {
-            N_M[k,i,x,t+1] <- Nprimeprime_M[k,i,x-1]
-            N_F[k,i,x,t+1] <- Nprimeprime_F[k,i,x-1]
-          }
-        }
+        Naged <- recr(N_F = array(Nprimeprime_F[,i,], dim=c(m,z)),
+                      N_M = array(Nprimeprime_M[,i,], dim=c(m,z)),
+                      S_F = array(S_F[,i,t], dim=c(m,1)),
+                      S_M = array(S_M[,i,t], dim=c(m,1)),
+                      m = m,
+                      z = z,
+                      kappa0 = kappa0[i,t],
+                      recr.dd = recr.dd,
+                      sexuality = "dioecious")
+        N_F[,i,,t+1] <- Naged[,,1] 
+        N_M[,i,,t+1] <- Naged[,,2]
       }
     }
     

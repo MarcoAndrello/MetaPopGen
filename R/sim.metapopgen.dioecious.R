@@ -355,52 +355,6 @@ sim.metapopgen.dioecious <- function(input.type,demographic.data,
     }
   
   
-  # Recruitment:
-  # S_M[,i],S_F[,i],Nprime_M[,i,],Nprime_F[,i,],m,kappa0[i,t]
-  # S, S_othersex.  Number of settlers of all genotypes. Dimension: m
-  # N_M, N_F.       Number of adults of all genotyps and age-classes. Dimensions: n*z
-  # m.              Number of genotypes
-  # kappa0.         Carrying capacity. Scalar.
-  
-  recr <-
-    function(S,S_othersex,N_M,N_F,m,kappa0,recr.dd) {
-      switch(recr.dd,
-             
-             # Dependence on settler density
-             settlers = {
-               Ntot <- sum(S+S_othersex)
-               sigma <- settler.survival(Ntot,kappa0)
-             },
-             
-             # Dependence on adult density
-             adults = {
-               Ntot <- sum(N_M[,1:(z-1)] + N_F[,1:(z-1)])
-               Stot <- sum(S+S_othersex)
-               Recr <- kappa0 - Ntot
-               
-               if (Recr <= 0){
-                 sigma <- 0
-               } else {
-                 sigma <- Recr / Stot
-               }
-               
-               if (sigma > 1) sigma <- 1
-             },
-             
-             # No-match: error
-             stop("Unknown value for argument recr.dd. Valid values: 'settlers', 'adults'")
-      )
-      
-      # Use recruitment probability to calculate the number of recruits
-      R <- array(0,dim=m)
-      for (k in 1 : m) {
-        R[k] <- rbinom(1,S[k],sigma)
-      }
-      return(R)
-    }
-  
-  
-  
   ##########################################################################
   
   # Simulate metapopulation genetics
@@ -419,9 +373,8 @@ sim.metapopgen.dioecious <- function(input.type,demographic.data,
   print("Running simulation...")
   for (t in 1 : (T_max-1)) {
     
-    print(t)
-    
-    
+    if (t %% 10 == 0) print(t)
+
     # At each time-step, redefine variable Nprime
     # If save.res, redefine also larval and settlers numbers
     if (save.res) {
@@ -518,27 +471,29 @@ sim.metapopgen.dioecious <- function(input.type,demographic.data,
     if (verbose) print("Apply recruitment function")
     for (i in 1 : n) {
       if (save.res) {
-        N_M[,i,1] <- recr(S_M[,i],S_F[,i],Nprime_M[,i,],Nprime_F[,i,],m,kappa0[i,t],recr.dd)  # Pass the abundance of other classes too
-        N_F[,i,1] <- recr(S_F[,i],S_M[,i],Nprime_M[,i,],Nprime_F[,i,],m,kappa0[i,t],recr.dd)
+        Naged <- recr(N_F = array(Nprime_F[,i,], dim=c(m,z)),
+                      N_M = array(Nprime_M[,i,], dim=c(m,z)),
+                      S_F = array(S_F[,i], dim=c(m,1)),
+                      S_M = array(S_M[,i], dim=c(m,1)),
+                      m = m,
+                      z = z,
+                      kappa0 = kappa0[i,t],
+                      recr.dd = recr.dd,
+                      sexuality = "dioecious")
+        N_F[,i,] <- Naged[,,1]
+        N_M[,i,] <- Naged[,,2]
       } else {
-        N_M[,i,1,t+1] <- recr(S_M[,i,t],S_F[,i,t],Nprime_M[,i,],Nprime_F[,i,],m,kappa0[i,t],recr.dd)
-        N_F[,i,1,t+1] <- recr(S_F[,i,t],S_M[,i,t],Nprime_M[,i,],Nprime_F[,i,],m,kappa0[i,t],recr.dd)
-      }
-    }
-    
-    if (verbose) print("Calculates N at t+1")
-    for (i in 1 : n){
-      for (x in 1 : z) {
-        if (x == 1) next
-        for (k in 1 : m) {
-          if (save.res) {
-            N_M[k,i,x] <- Nprime_M[k,i,x-1]
-            N_F[k,i,x] <- Nprime_F[k,i,x-1]
-          } else {
-            N_M[k,i,x,t+1] <- Nprime_M[k,i,x-1]
-            N_F[k,i,x,t+1] <- Nprime_F[k,i,x-1]
-          }
-        }
+        Naged <- recr(N_F = array(Nprime_F[,i,], dim=c(m,z)),
+                      N_M = array(Nprime_M[,i,], dim=c(m,z)),
+                      S_F = array(S_F[,i,t], dim=c(m,1)),
+                      S_M = array(S_M[,i,t], dim=c(m,1)),
+                      m = m,
+                      z = z,
+                      kappa0 = kappa0[i,t],
+                      recr.dd = recr.dd,
+                      sexuality = "dioecious")
+        N_F[,i,,t+1] <- Naged[,,1] 
+        N_M[,i,,t+1] <- Naged[,,2]
       }
     }
     
