@@ -46,10 +46,10 @@ sim.metapopgen.dioecious.multilocus(init.par,
     Dispersal probabilities for adults. Square matrix of size \code{n*n}. \code{delta.ad[i,j]} is the dispersal probability from deme \code{j} to deme \code{i} (see also Details). Alternatively, \code{delta.ad} can be a 3-D array of length c(n,n,z): this will be interpreted as dispersal varying with age; or \code{delta.ad} can be a 4-D array of length c(n,n,z,T_max), which will be interpreted as dispersal varying with age and in time. To set dispersal probabilities constant with age and varying in time, use the 4-D format.
   }
   \item{recr.dd}{
-    Defines how settler survival probabilities depend on density. If "settlers" (default), settler survival probabilities depends on the number of settlers, through the function \code{\link[MetaPopGen:settler.survival]{settler.survival}}. If "adults", settler survival probabilities depends on the number of adults (all individuals already present in the deme): only up to \code{kappa0[i,t]}  individuals are allowed in a deme (see argument \code{kappa0}).
+Defines how population regulation is performed. Currently inactive.
   }
   \item{kappa0}{
-    2-D array of length c(n,T_max). Carrying capacity used to calculate the density-dependent settler survival probabilities. If the argument \code{recr.dd = "settlers"}, \code{kappa0[i,t]} is the settler carrying capacity for deme i at time t (maximum number of settlers allowed to recruit), and is used in the function \code{\link[MetaPopGen:settler.survival]{settler.survival}}. If \code{recr.dd = "adults"}, \code{kappa0[i,t]} is the maximum number of individuals allowed for deme i at time t. \code{kappa0} can also be a 1-D array of length n: this will be interpreted as a carrying capacity constant in time.
+  2-D array of length c(n,T_max). Deme carrying capacity used to perform population regulation. \code{kappa0} can also be a 1-D array of length n: this will be interpreted as a carrying capacity constant in time.
   }
   \item{T_max}{
     Number of years of simulations.
