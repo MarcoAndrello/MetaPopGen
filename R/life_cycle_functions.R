@@ -78,6 +78,7 @@ union.gametes <- function(G_M, G_F, l) {
         }
         mat_geno[j,] <- extr
         Gprime_max <- Gprime_max - extr
+        Gprime_max[which(Gprime_max<0)] <- 0 # Needed bcs multinomial and multivariate normal could extract more gametes than there are
     }
     mat_geno
 }
