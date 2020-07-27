@@ -1,5 +1,6 @@
 \name{create.dispersal.coord}
 \alias{create.dispersal.coord}
+\alias{create.dispersal.IM}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Create dispersal matrix
