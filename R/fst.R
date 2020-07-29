@@ -61,6 +61,22 @@ fst_multilocus <- function(N, init.par) {
     H_S[i.locus] <- weighted.mean(H_S_group[i.locus,],n_group)
   }
   
+  # # H_S as in Nei and Chesser
+  # p <- list()
+  # p_2_bar <- list()
+  # H_S_nc <- array(NA, nLoc)
+  # for (i.locus in 1 : nLoc) {
+  #   p[[i.locus]] <- array(NA,c(init.par$allele_vec[i.locus], num_groups))
+  #   p_2_bar[[i.locus]] <- array(NA,init.par$allele_vec[i.locus])
+  #   for (i.group in 1 : num_groups) {
+  #     p[[i.locus]][,i.group] <- freq_alleles(N[,i.group], init.par)$frequencies[[i.locus]]
+  #   }
+  #   for (i.allele in 1 : init.par$allele_vec[i.locus]) {
+  #     p_2_bar[[i.locus]][i.allele] <- sum(n_group / sum(n_group) * (p[[i.locus]][i.allele,])^2 )
+  #   }
+  #   H_S_nc[i.locus] <- 1 - sum(p_2_bar[[i.locus]])
+  # }
+
   # H_T per locus
   H_T <- het_exp(N_T, init.par)
   
