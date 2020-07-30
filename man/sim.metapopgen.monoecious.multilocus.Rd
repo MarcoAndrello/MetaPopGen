@@ -30,7 +30,7 @@ sim.metapopgen.dioecious.multilocus(init.par,
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{init.par}{
-        A list of arguments necessary to initialize the simulations and obtained with the function initialize.monoecious.multilocus. See the example.
+        A list of arguments necessary to initialize the simulations and obtained with the function \code{\link{initialize.multilocus}}. See the example.
         }
   \item{sigma, sigma_F, sigma_M}{
     Survival probabilities. 4-D array of length c(m,n,z,T_max). \code{sigma[j,i,x,t]} is the survival probability for individuals of genotype \code{j}, age \code{x} in deme \code{i} at time \code{t}. Alternatively, \code{sigma} can be a 3-D array of length c(m,n,z): this will be interpreted as survival probabilities constant in time. All the elements of \code{sigma} are bounded between [0,1].
@@ -82,6 +82,9 @@ Marco Andrello
 \note{
 }
 \seealso{
+\code{\link{initialize.multilocus}}
+\code{\link{create.dispersal.coord}}
+\code{\link{create.dispersal.IM}}
 }
 \examples{
 \dontrun{
