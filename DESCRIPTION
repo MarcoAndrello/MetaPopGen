@@ -2,11 +2,11 @@ Package: MetaPopGen
 Type: Package
 Title: Simulation of metapopulation genetics
 Version: 2.0
-Date: 2020-07-13
+Date: 2020-07-30
 Author: Marco Andrello, Christelle Noirot
 Maintainer: Marco Andrello <marco.andrello@gmail.com>
-Description: Functions and code to simulate metapopulation genetics. Includes genetic drift, mutation, selection and migration. The metapopulation has age-structure. Migration is limited to the first age class (like seeds in plants and larvae in marine organisms). The model can handle very large numbers of individuals and simulations are very fast. Version 2.0 allow for multilocus simulations. 
-Depends: BiasedUrn, genetics, sp, MASS, abind
+Description: Functions and code to simulate metapopulation genetics. 
+Depends: BiasedUrn, sp, MASS, abind, genetics
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 License: GPL-2

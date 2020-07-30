@@ -1,8 +1,9 @@
 # Calculates genotype and allele frequencies 
 
-# freq.all
+# freq.all (single-locus function)
 # change_allele_order
 # freq_genotypes
+# freq_alleles
 
 freq.all = function(N){
   m <- length(N)              # Number of genotypes
@@ -62,7 +63,7 @@ freq_genotypes <- function(N, init.par) {
       }
     }
     
-  } else {
+  } else { # init.par$method == "gamete"
     nLoc <- 2 # Valid only for two loci
     # Names of single-locus genotypes
     names_genotypes <- def_genotype.name.locus(init.par$allele_vec)
@@ -129,15 +130,16 @@ freq_alleles <- function(N,init.par,fG=NULL) {
     names_genotypes <- names(fG$counts[[i.locus]])
     
     # Use package "genetics" to find allele counts per genotype
-    if(any(sapply(names_genotypes,nchar)>4)) stop("All single-locus genotype names must be 4 character length")
+    if(any(sapply(names_genotypes,nchar)>4)) stop("All single-locus genotype names must be 4 character length; maybe you are using more than 10 alleles per locus?")
     names_genotypes_genetics <- genetics::genotype(names_genotypes,sep=2)
     allele_counts_per_genotype <- genetics::allele.count(names_genotypes_genetics)
+
     
     # Order alleles from 1 to n
     allele_counts_per_genotype <- allele_counts_per_genotype[,order(colnames(allele_counts_per_genotype))] 
     
     # Add genotype name (not needed, just for clarity in debugging)
-    # rownames(allele_counts_per_genotype) <- names_genotypes
+    rownames(allele_counts_per_genotype) <- names_genotypes
     
     num_alleles_per_locus <- init.par$allele_vec[i.locus]
     for (i.allele in 1 : num_alleles_per_locus) {
