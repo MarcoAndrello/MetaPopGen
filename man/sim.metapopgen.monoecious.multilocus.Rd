@@ -12,23 +12,24 @@
 sim.metapopgen.monoecious.multilocus(init.par,
                                     sigma,
                                     phi_F, phi_M,
-                                    fec.distr_F, fec.distr_M,
-                                    migration="forward",
+                                    fec.distr_F = "poisson", fec.distr_M = "poisson",
+                                    migration = "forward",
                                     delta.prop, delta.ad, migr,
-                                    recr.dd="settlers", kappa0,
+                                    recr.dd = "settlers", kappa0,
                                     T_max,
-                                    save.res=FALSE, save.res.T=seq(1:T_max),
+                                    save.res = FALSE, save.res.T = seq(1:T_max),
                                     output.var = "N",
-                                    verbose=FALSE)
+                                    verbose = FALSE)
                                     
 sim.metapopgen.dioecious.multilocus(init.par,
                                     sigma_F, sigma_M,
-                                    phi_F, phi_M,
+                                    phi_F, phi_M,,
+                                    fec.distr_F = "poisson", fec.distr_M = "poisson",
                                     delta.prop, delta.ad,
-                                    recr.dd="settlers", kappa0,
+                                    recr.dd = "settlers", kappa0,
                                     T_max,
-                                    save.res=FALSE, save.res.T=seq(1:T_max),
-                                    verbose=FALSE)
+                                    save.res = FALSE, save.res.T = seq(1:T_max),
+                                    verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -42,7 +43,7 @@ sim.metapopgen.dioecious.multilocus(init.par,
     Mean female and male fecundity. 4-D array of length c(m,n,z,T_max). \code{phi_F[j,i,x,t]} is the female fecundity for individuals of genotype \code{j}, age \code{x} in deme \code{i} at time \code{t}. Alternatively, \code{phi_F} and \code{phi_M} can be a 3-D array of length c(m,n,z): this will be interpreted as female or male fecundities constant in time. Female fecundity is the per capita number of female gametes (eggs for animals, embrio sacs for plants). Male fecundity is the per capita number of male gametes (sperms for animals, pollen grains for plants). All the elements of \code{phi_F} and \code{phi_M} must be positive integers.
   }
     \item{fec.distr_F, fec.distr_M}{
-The distribution used to set fecundities: one of \code{"fixed"} or \code{"poisson"}. The \code{"fixed"} option sets the fecundity of each individual equal to the mean (\code{phi_F} and \code{phi_M}). Option \code{"poisson"} draws individual fecundities form a Poisson distribution with means \code{phi_F} and \code{phi_M}.
+The distribution used to set fecundities: one of \code{"fixed"} or \code{"poisson"} (default). The \code{"fixed"} option sets the fecundity of each individual equal to the mean (\code{phi_F} and \code{phi_M}). Option \code{"poisson"} draws individual fecundities form a Poisson distribution with means \code{phi_F} and \code{phi_M}.
   }
       \item{migration}{
 The type of migration used, \code{"forward"} (the default) or \code{"backward"}.\cr\cr
@@ -132,12 +133,18 @@ Marco Andrello
 \examples{
 \dontrun{
 data("MultilocusMonoecious")
-res <- sim.metapopgen.monoecious.multilocus(init.par=init.par,
-                                            sigma=sigma,
-                                            phi_F=phi_F, phi_M=phi_M,
-                                            fec.distr_F="fixed", fec.distr_M="fixed",
-                                            delta.prop=delta.prop, delta.ad=delta.ad,
-                                            T_max=T_max)
+res <- sim.metapopgen.monoecious.multilocus(init.par = init.par,
+                                            sigma = sigma,
+                                            phi_F = phi_F, phi_M = phi_M,
+                                            delta.prop = delta.prop, delta.ad = delta.ad,
+                                            T_max = T_max)
+                                            
+data("MultilocusDioecious")
+res <- sim.metapopgen.dioecious.multilocus(init.par = init.par,
+                                            sigma_F = sigma_F, sigma_M = sigma_M,
+                                            phi_F = phi_F, phi_M = phi_M,
+                                            delta.prop = delta.prop, delta.ad = delta.ad,
+                                            T_max = T_max)
 
 }
 }

@@ -1,11 +1,13 @@
 sim.metapopgen.dioecious.multilocus <- function(init.par,
                                                 sigma_F, sigma_M,
                                                 phi_F, phi_M,
+                                                fec.distr_F = "poisson", fec.distr_M = "poisson",
+                                                migration = "forward", migr,
                                                 delta.prop = NULL, delta.ad = NULL,
                                                 recr.dd="settlers",
                                                 T_max,
-                                                save.res=F, save.res.T=seq(1:T_max),
-                                                verbose=F) {
+                                                save.res = F, save.res.T = seq(1:T_max),
+                                                verbose = F) {
   
   # Reading basic variables
   m                         <- init.par$m                          # Number of genotypes
@@ -23,6 +25,10 @@ sim.metapopgen.dioecious.multilocus <- function(init.par,
   if (z == 1 & recr.dd == "adults") {
     stop("Detected only one age class (z=1) and recruitment probability dependent on adult density (recr.dd == 'adults'). This combination is not supported. Use recr.dd == 'settlers' instead.")
   }
+  
+  # Check fec.distr_F and fec.distr_M
+  if(!fec.distr_F %in% c("fixed","poisson")) stop(paste("Unknown parameter value for fec.distr_F:",fec.distr_F))
+  if(!fec.distr_M %in% c("fixed","poisson")) stop(paste("Unknown parameter value for fec.distr_M:",fec.distr_M))
   
   # .............................Check the existence of dispersal matrices
   if (is.null(delta.prop)) {
@@ -204,7 +210,8 @@ sim.metapopgen.dioecious.multilocus <- function(init.par,
           L_F[,i] = 0
           next
         } else {
-          LL <- repr(Nprimeprime_F[,i,], Nprimeprime_M[,i,], phi_F[,i,,t], phi_M[,i,,t], l, m, z, meiosis_matrix, mat_geno_to_index_mapping)
+          LL <- repr(Nprimeprime_F[,i,], Nprimeprime_M[,i,], phi_F[,i,,t], phi_M[,i,,t], l, m, z,
+                     meiosis_matrix, mat_geno_to_index_mapping, fec.distr_F, fec.distr_M, migration)
           L_M[,i] <- LL[,1]
           L_F[,i] <- LL[,2]
           rm(LL)
@@ -215,7 +222,8 @@ sim.metapopgen.dioecious.multilocus <- function(init.par,
           L_F[,i,t] = 0
           next
         } else {
-          LL <- repr(Nprimeprime_F[,i,], Nprimeprime_M[,i,], phi_F[,i,,t], phi_M[,i,,t], l, m, z, meiosis_matrix, mat_geno_to_index_mapping)
+          LL <- repr(Nprimeprime_F[,i,], Nprimeprime_M[,i,], phi_F[,i,,t], phi_M[,i,,t], l, m, z,
+                     meiosis_matrix, mat_geno_to_index_mapping, fec.distr_F, fec.distr_M, migration)
           L_M[,i,t] <- LL[,1]
           L_F[,i,t] <- LL[,2]
         }

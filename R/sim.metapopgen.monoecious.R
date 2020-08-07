@@ -1,8 +1,8 @@
 sim.metapopgen.monoecious <- function(input.type,demographic.data,
                                       N1,
                                       sigma,
-                                      phi_F,phi_M,
-                                      fec.distr_F, fec.distr_M,
+                                      phi_F, phi_M,
+                                      fec.distr_F = "poisson", fec.distr_M = "poisson",
                                       mu,
                                       migration="forward", 
                                       delta, migr=NULL,
@@ -51,8 +51,8 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
   z <- dim(N1)[3]                 # Number of age-classes
   
   # Check fec.distr_F and fec.distr_M
-  if(!fec.distr_F %in% c("fixed","poisson","Poisson")) stop(paste("Unknown parameter value for fec.distr_F:",fec.distr_F))
-  if(!fec.distr_M %in% c("fixed","poisson","Poisson")) stop(paste("Unknown parameter value for fec.distr_M:",fec.distr_M))
+  if(!fec.distr_F %in% c("fixed","poisson")) stop(paste("Unknown parameter value for fec.distr_F:",fec.distr_F))
+  if(!fec.distr_M %in% c("fixed","poisson")) stop(paste("Unknown parameter value for fec.distr_M:",fec.distr_M))
   
   
   # If only one age-class and recr.dd=="adults", gives an error
@@ -184,8 +184,8 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
           L[,i] = 0
           next
         } else {
-          res.repr <- repr.onelocus(Nprime,phi_F[,,,t],phi_M[,,,t],mu,i,l,m,
-                                 fec.distr_F=fec.distr_F, fec.distr_M=fec.distr_M, migration=migration, verbose=verbose)
+          res.repr <- repr.monoecious.onelocus(Nprime, phi_F[,,,t], phi_M[,,,t], mu, i, l, m, n, z,
+                                 fec.distr_F = fec.distr_F, fec.distr_M = fec.distr_M, migration=migration, verbose=verbose)
           if (migration == "forward") {
             L[,i] <- res.repr
           } else {
@@ -200,7 +200,7 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
           L[,i,t] = 0
           next
         } else {
-          res.repr <- repr.onelocus(Nprime,phi_F[,,,t],phi_M [,,,t],mu,i,l,m,
+          res.repr <- repr.monoecious.onelocus(Nprime,phi_F[,,,t], phi_M [,,,t],mu, i, l, m, n, z,
                                    fec.distr_F=fec.distr_F, fec.distr_M=fec.distr_M, migration=migration, verbose=verbose)
           if (migration == "forward") {
             L[,i,t] <- res.repr

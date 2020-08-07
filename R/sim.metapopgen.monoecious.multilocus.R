@@ -1,14 +1,14 @@
 sim.metapopgen.monoecious.multilocus <- function(init.par,
                                                  sigma,
                                                  phi_F, phi_M,
-                                                 fec.distr_F, fec.distr_M,
-                                                 migration="forward",
-                                                 delta.prop = NULL, delta.ad = NULL, migr = NULL,
+                                                 fec.distr_F = "poisson", fec.distr_M = "poisson",
+                                                 migration = "forward", migr,
+                                                 delta.prop = NULL, delta.ad = NULL,
                                                  recr.dd="settlers",
                                                  T_max,
-                                                 save.res=F, save.res.T=seq(1:T_max),
-                                                 output.var="N",
-                                                 verbose=F) {
+                                                 save.res = F, save.res.T = seq(1:T_max),
+                                                 output.var = "N",
+                                                 verbose = F) {
   
   # Reading basic variables
   m                         <- init.par$m                          # Number of genotypes

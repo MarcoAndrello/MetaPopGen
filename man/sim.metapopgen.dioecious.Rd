@@ -2,21 +2,27 @@
 \alias{sim.metapopgen.dioecious}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Main function to simulate metapopulation genetics\cr(dioecious species)
+Simulate one-locus metapopulation genetics\cr(dioecious life cycles)
 }
 \description{
 Simulates the metapopulation genetics. The function will calculate automatically from its arguments the number of alleles \code{l}, the number of genotypes \code{m}, the number of demes \code{n} and the number of age-classes \code{z}. It is therefore important that all the arguments have the correct dimensions and size.
 }
 \usage{
-sim.metapopgen.dioecious(input.type, demographic.data,
-  N1_M, N1_F,
-  sigma_M, sigma_F, phi_M, phi_F,
-  mu,
-  delta,
-  recr.dd="settlers", kappa0,
-  T_max,
-  save.res = F, save.res.T=seq(1,T_max),
-  verbose = F)
+  res <- sim.metapopgen.dioecious(input.type,
+                                  demographic.data,
+                                  N1_M, N1_F,
+                                  sigma_M, sigma_F,
+                                  phi_F, phi_M,
+                                  fec.distr_F = "poisson", fec.distr_M = "poisson",
+                                  mu,
+                                  migration = "forward", migr,
+                                  delta,
+                                  recr.dd="settlers", kappa0,
+                                  T_max,
+                                  save.res = F, save.res.T = seq(1,T_max),
+                                  verbose = F)
+                                  
+                                  
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -41,13 +47,15 @@ Survival probabilities for females. The same as \code{sigma_M}.
   \item{phi_F}{
 Mean female fecundity. 4-D array of length c(m,n,z,T_max). \code{phi_F[j,i,x,t]} is the female fecundity for individuals of genotype \code{j}, age \code{x} in deme \code{i} at time \code{t}. Alternatively, \code{phi_F} can be 
 a 3-D array of length c(m,n,z): this will be interpreted as female fecundities constant in time. The female fecundity is the per capita number of female gametes (eggs for animals, embrio sacs for plants). All the elements of \code{phi_F} must be natural numbers. To be used when \code{input.type = "array"}.
-Variation in fecundity among individuals follows a Poisson distribution.
 }
   \item{phi_M}{
 Mean male fecundity. 4-D array of length c(m,n,z,T_max). \code{phi_M[j,i,x,t]} is the male fecundity for individuals of genotype \code{j}, age \code{x} in deme \code{i} at time \code{t}. Alternatively, \code{phi_M} can be 
 a 3-D array of length c(m,n,z): this will be interpreted as male fecundities constant in time. The male fecundity is the per capita number of male gametes (sperms for animals, pollen grains for plants). All the elements of \code{phi_F} must be natural numbers. To be used when \code{input.type = "array"}.
-Variation in fecundity among individuals follows a Poisson distribution.
 }
+    \item{fec.distr_F, fec.distr_M}{
+The distribution used to set fecundities: one of \code{"fixed"} or \code{"poisson"} (default). The \code{"fixed"} option sets the fecundity of each individual equal to the mean (\code{phi_F} and \code{phi_M}). Option \code{"poisson"} draws individual fecundities form a Poisson distribution with means \code{phi_F} and \code{phi_M}.
+  }
+
   \item{mu}{
 Mutation rates. Square matrix of size \code{l*l}. \code{mu[i,j]} is the probability that allele \code{j} mutates into allele \code{i}. The elements of the diagonal of \code{mu} are the probabilities that the allele does not mutate, i.e. it must be \code{colSums(mu)} = 1
 }
@@ -90,7 +98,7 @@ If \code{save.res} is TRUE: the function does not return anything. Results are s
 }
 \examples{
 data(FourPopDioecious)
-N <- sim.metapopgen.dioecious(input.type="array",N1_M=N1_M, N1_F=N1_F,
+res <- sim.metapopgen.dioecious(input.type="array",N1_M=N1_M, N1_F=N1_F,
   sigma_M=sigma_M, sigma_F=sigma_F, phi_F=phi_F, phi_M=phi_M, mu=mu,
   delta=delta, kappa0=kappa0, T_max=T_max)
 
