@@ -1,7 +1,15 @@
 sim.metapopgen.monoecious <- function(input.type,demographic.data,
-                                      N1,sigma,phi_F,phi_M,
-                                      mu,delta,recr.dd="settlers",
-                                      kappa0,T_max,save.res=F,save.res.T=seq(1,T_max),verbose=F) {
+                                      N1,
+                                      sigma,
+                                      phi_F,phi_M,
+                                      fec.distr_F, fec.distr_M,
+                                      mu,
+                                      migration="forward", 
+                                      delta, migr=NULL,
+                                      recr.dd="settlers",
+                                      kappa0,
+                                      T_max,save.res=F,save.res.T=seq(1,T_max),
+                                      verbose=F) {
 
   ##########################################################################
   
@@ -41,6 +49,11 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
   l <- (sqrt(1+8*m)-1)/2          # Nuber of alleles
   n <- dim(N1)[2]                 # Number of demes
   z <- dim(N1)[3]                 # Number of age-classes
+  
+  # Check fec.distr_F and fec.distr_M
+  if(!fec.distr_F %in% c("fixed","poisson","Poisson")) stop(paste("Unknown parameter value for fec.distr_F:",fec.distr_F))
+  if(!fec.distr_M %in% c("fixed","poisson","Poisson")) stop(paste("Unknown parameter value for fec.distr_M:",fec.distr_M))
+  
   
   # If only one age-class and recr.dd=="adults", gives an error
   if (z == 1 & recr.dd == "adults") {
@@ -97,151 +110,6 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
     S       <- array(0,dim=c(m,n,T_max))
   }
   
-
-  
-  ##########################################################################
-  
-  # Define functions
-  
-  ##########################################################################
-  
-  # Reproduction
-  repr.onelocus <-
-    function(Nprime,phi_F,phi_M,mu,i,l,m) {
-	
-		# Adjust dimensions if there is only one age-class and/or one deme
-		#if (length(dim(phi_F))==2) dim(phi_F)[3]<-1
-		#if (length(dim(phi_M))==2) dim(phi_M)[3]<-1
-      dim(phi_F) <- c(m,n,z)
-      dim(phi_M) <- c(m,n,z)
-	    # n and z are not passed to the function? But it works...
-      
-      if (verbose) print("Calculates total number of female gametes")
-      
-      fecx<- array(0,dim=c(m,z))	# Number of female gametes produced by all the individuals of each genotype in each age class
-	  fec<- array(0,dim=m)			# Number of female gametes produced by all the individuals of each genotype
-      
-	  for (k in 1 : m) {
-		for (x in 1 : z) {
-			fecx[k,x] <- sum(as.numeric(rpois(Nprime[k,i,x],phi_F[k,i,x])))	# This is the contribution of variation in reproductive success among individuals to genetic drift
-			}
-			fec[k] <- sum(fecx[k,])
-      }
-      
-      
-      if (verbose) print("Calculate number of gametes for each allele")
-      
-      G_F <- array(0,dim=l)
-      k <- 1
-      for (j in 1 : l) {
-        for (jj in j : l) {
-          if (j == jj) {
-            G_F[j] <- G_F[j] + fec[k]
-          } else {
-            meiosis_j<- rbinom(1,fec[k],0.5)# This is the contribution of Mendelian segregation to genetic drift
-            meiosis_jj<- fec[k] - meiosis_j
-            G_F[j]<- G_F[j] + meiosis_j
-            G_F[jj]<- G_F[jj] + meiosis_jj
-          }
-          k <- k + 1
-        }
-      }
-      
-      
-      if (verbose) print("Calculates total number of male gametes")
-      
-	  fecx <- array(0,dim=c(m,z))	# Number of male gametes produced by all the individuals of each genotype in each age class
-	  fec <- array(0,dim=m)			# Number of male gametes produced by all the individuals of each genotype
-      for (k in 1 : m) {
-		for (x in 1 : z) {
-			fecx[k,x] <- sum(as.numeric(rpois(Nprime[k,i,x],phi_M[k,i,x])))	# This is the contribution of variation in reproductive success among individuals to genetic drift
-			}
-			fec[k] <- sum(fecx[k,])
-      }
-	  
-      
-      if (verbose) print("Calculate number of gametes for each allele")
-      G_M <- array(0,dim=l)
-      k <- 1
-      for (j in 1 : l) {
-        for (jj in j : l) {
-          if (j == jj) {
-            G_M[j] <- G_M[j] + fec[k]
-          } else {
-            meiosis_j<- rbinom(1,fec[k],0.5)
-            meiosis_jj<- fec[k] - meiosis_j
-            G_M[j]<- G_M[j] + meiosis_j
-            G_M[jj]<- G_M[jj] + meiosis_jj
-          }
-          k <- k + 1
-        }
-      }
-      
-      if (verbose) print("Mutation")
-      Gprime_F <- array(0,dim=l)
-      Gprime_M <- array(0,dim=l)
-      for (j in 1 : l){
-        Gprime_F <- Gprime_F + as.vector(rmultinom(1,G_F[j],mu[,j]))
-        Gprime_M <- Gprime_M + as.vector(rmultinom(1,G_M[j],mu[,j]))
-      }
-      G_F <- Gprime_F
-      G_M <- Gprime_M
-      
-      
-      if (verbose) print("Union of gametes to form zygotes")
-      if (sum(G_F) <= sum(G_M)) {
-        
-        mat_geno<- array(0,dim=c(l,l))
-        Gprime_M<- G_M
-        for (j in 1 : l) {
-          in_dist<- Gprime_M 
-          odds<- array(1,dim=l)
-          ndraws<- G_F[j]
-          err<- try(rMWNCHypergeo(1,in_dist,ndraws,odds),silent=T)
-          if (class(err)=="try-error") {
-            extr<- as.numeric(rmultinom(1,ndraws,in_dist))
-          } else {
-            extr<- err
-          }
-          mat_geno[j,]<- extr
-          Gprime_M<- Gprime_M - extr
-        }
-        mat_geno_l<- mat_geno
-        mat_geno_l[upper.tri(mat_geno_l)]<- 0
-        mat_geno_u<- mat_geno
-        mat_geno_u[lower.tri(mat_geno_u,diag=T)]<- 0
-        mat_geno_f<- mat_geno_l + t(mat_geno_u)
-        L<- mat_geno_f[lower.tri(mat_geno_f,diag=T)]
-        
-      } else {
-        
-        mat_geno<- array(0,dim=c(l,l))
-        Gprime_F<- G_F
-        for (j in 1 : l) {
-          in_dist<- Gprime_F 
-          odds<- array(1,dim=l)
-          ndraws<- G_M[j]
-          err<- try(rMWNCHypergeo(1,in_dist,ndraws,odds),silent=T)
-          if (class(err)=="try-error") {
-            extr<- as.numeric(rmultinom(1,ndraws,in_dist))
-          } else {
-            extr<- err
-          }
-          mat_geno[j,]<- extr
-          Gprime_F<- Gprime_F - extr
-        }
-        mat_geno_l<- mat_geno
-        mat_geno_l[upper.tri(mat_geno_l)]<- 0
-        mat_geno_u<- mat_geno
-        mat_geno_u[lower.tri(mat_geno_u,diag=T)]<- 0
-        mat_geno_f<- mat_geno_l + t(mat_geno_u)
-        L<- mat_geno_f[lower.tri(mat_geno_f,diag=T)]
-        
-      }
-      
-      return(L)
-    }
-  
   
   ##########################################################################
   
@@ -260,7 +128,7 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
   
   
   print("Running simulation...")
-  for (t in 1 : (T_max-1)) {
+  for (t in 1 : (T_max)) {
     
     if (t %% 10 == 0) print(t)
 
@@ -295,13 +163,18 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
     }
     
     
+    ## Reproduction
     
     if (verbose) print("Apply reproduction function")
 
-    
     # If there is only one age-class, we must force the third dimension
     if (length(dim(phi_F))==2) dim(phi_F)[3] <- 1
     if (length(dim(phi_M))==2) dim(phi_M)[3] <- 1
+    
+    if (migration == "backward") {
+      G_F <- array(0,c(l,n))
+      G_M <- array(0,c(l,n))
+    }
     
     for (i in 1 : n) {
       
@@ -311,7 +184,14 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
           L[,i] = 0
           next
         } else {
-          L[,i] <- repr.onelocus(Nprime,phi_F[,,,t],phi_M[,,,t],mu,i,l,m)
+          res.repr <- repr.onelocus(Nprime,phi_F[,,,t],phi_M[,,,t],mu,i,l,m,
+                                 fec.distr_F=fec.distr_F, fec.distr_M=fec.distr_M, migration=migration, verbose=verbose)
+          if (migration == "forward") {
+            L[,i] <- res.repr
+          } else {
+            G_F[,i] <- res.repr$G_F
+            G_M[,i] <- res.repr$G_M
+          }
         }
         
       } else {
@@ -320,47 +200,39 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
           L[,i,t] = 0
           next
         } else {
-          L[,i,t] <- repr.onelocus(Nprime,phi_F[,,,t],phi_M [,,,t],mu,i,l,m)
+          res.repr <- repr.onelocus(Nprime,phi_F[,,,t],phi_M [,,,t],mu,i,l,m,
+                                   fec.distr_F=fec.distr_F, fec.distr_M=fec.distr_M, migration=migration, verbose=verbose)
+          if (migration == "forward") {
+            L[,i,t] <- res.repr
+          } else {
+            G_F[,i] <- res.repr$G_F
+            G_M[,i] <- res.repr$G_M
+
+          }
         }
         
       }
     }
     
     
-    if (verbose) print("Apply dispersal function")
-    for (i in 1 : n) {
-      for (k in 1 : m) {
-        if (save.res) {
-          y = disp(L[k,i],delta[,i,t])
-          S[k,] <- S[k,] + y[1:n]       
-        } else {
-          y = disp(L[k,i,t],delta[,i,t])
-          S[k,,t] <- S[k,,t] + y[1:n]
+    ## Propagule dispersal
+    if (migration == "forward") {
+      if (verbose) print("Apply dispersal function")
+      for (i in 1 : n) {
+        for (k in 1 : m) {
+          if (save.res) {
+            y = disp(L[k,i],delta[,i,t])
+            S[k,] <- S[k,] + y[1:n]       
+          } else {
+            y = disp(L[k,i,t],delta[,i,t])
+            S[k,,t] <- S[k,,t] + y[1:n]
+          }
         }
       }
-    }  
-    
-    
-    if (verbose) print("Apply recruitment function")
-    for (i in 1 : n) {
-      if (save.res) {
-        N[,i,] <- recr(N = array(Nprime[,i,], dim=c(m,z)),
-                        S = array(S[,i], dim=c(m,1)),
-                        m = m,
-                        z = z,
-                        kappa0 = kappa0[i,t],
-                        recr.dd = recr.dd,
-                        sexuality="monoecious")
-      } else {
-        N[,i,,t+1] <- recr(N = array(Nprime[,i,], dim=c(m,z)),
-                            S = array(S[,i,t], dim=c(m,1)),
-                            m = m,
-                            z = z,
-                            kappa0 = kappa0[i,t],
-                            recr.dd = recr.dd,
-                            sexuality = "monoecious")
-      }
     }
+    
+    
+
     
     
     # Save results if save.res=T
@@ -371,9 +243,47 @@ sim.metapopgen.monoecious <- function(input.type,demographic.data,
       }
     }
     
+    # Recruitment
+    if (t == T_max) break # otherwise attempts to write on T_max + 1
+    
+    # Recruitment with backward migration
+    if (migration == "backward") {
+      for (j in 1 : n) {
+        res.recr <- recr.backward.migration.onelocus(G_F, G_M, migr, l, m, n, z, j.local.deme=j, kappa0[j,t+1],
+                                            sexuality="monoecious", t=t+1)
+        if (save.res) {
+          N[,j,1] <- res.recr # 1 bcs only 1 age class is supported now
+        } else {
+          N[,j,1,t+1] <- res.recr # idem
+        }
+        
+      }
+      next
+    }
+    
+    
+    if (verbose) print("Apply recruitment function")
+    for (i in 1 : n) {
+      if (save.res) {
+        N[,i,] <- recr(N = array(Nprime[,i,], dim=c(m,z)),
+                       S = array(S[,i], dim=c(m,1)),
+                       m = m,
+                       z = z,
+                       kappa0 = kappa0[i,t+1], # Pay attention here: using carrying capacity of next generation
+                       recr.dd = recr.dd,
+                       sexuality="monoecious")
+      } else {
+        N[,i,,t+1] <- recr(N = array(Nprime[,i,], dim=c(m,z)),
+                           S = array(S[,i,t], dim=c(m,1)),
+                           m = m,
+                           z = z,
+                           kappa0 = kappa0[i,t+1],
+                           recr.dd = recr.dd,
+                           sexuality = "monoecious")
+      }
+    }
     
   }
-  print(T_max)
   print("...done")
   if (save.res==F) return(N)
 }
