@@ -29,6 +29,7 @@ sim.metapopgen.dioecious.multilocus(init.par,
                                     recr.dd = "settlers", kappa0,
                                     T_max,
                                     save.res = FALSE, save.res.T = seq(1:T_max),
+                                    output.var = "N",
                                     verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -52,7 +53,10 @@ With backward migration, migration is modelled using argument \code{migr} as in 
 Backward migration is currently limited to only one age class and monoecious life cycles.\cr\cr
 \code{migration} does not affect adult dispersal.
   }
-  
+\item{migr}{
+Migration rate used when \code{migration = "backward"}.
+}
+       
   \item{delta.prop}{
     Dispersal probabilities for propagules. Square matrix of size \code{n*n}. \code{delta.prop[i,j]} is the dispersal probability from deme \code{j} to deme \code{i} (see also Details). Alternatively, \code{delta.prop} can be a 3-D array of length c(n,n,T_max): this will be interpreted as dispersal varying in time.
   }

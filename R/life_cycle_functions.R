@@ -12,6 +12,9 @@
 # Regulate pop size
 # Recruit settlers
 # Recruit adults
+# Recruitment with backward migration one locus
+# Reproduction monoecious one locus
+# Reproduction dioecious one locus
 
 
 # Survival

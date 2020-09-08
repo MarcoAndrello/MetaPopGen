@@ -1,14 +1,15 @@
-sim.metapopgen.monoecious <- function(input.type,demographic.data,
+sim.metapopgen.monoecious <- function(input.type, demographic.data,
                                       N1,
                                       sigma,
                                       phi_F, phi_M,
                                       fec.distr_F = "poisson", fec.distr_M = "poisson",
                                       mu,
-                                      migration="forward", 
-                                      delta, migr=NULL,
+                                      migration="forward", migr=NULL,
+                                      delta, 
                                       recr.dd="settlers",
                                       kappa0,
-                                      T_max,save.res=F,save.res.T=seq(1,T_max),
+                                      T_max,
+                                      save.res=F,save.res.T=seq(1,T_max),
                                       verbose=F) {
 
   ##########################################################################
