@@ -46,10 +46,10 @@ sim.metapopgen.dioecious.multilocus(init.par,
 The distribution used to set fecundities: one of \code{"fixed"} or \code{"poisson"} (default). The \code{"fixed"} option sets the fecundity of each individual equal to the mean (\code{phi_F} and \code{phi_M}). Option \code{"poisson"} draws individual fecundities form a Poisson distribution with means \code{phi_F} and \code{phi_M}.
   }
       \item{migration}{
-The type of migration used, \code{"forward"} (the default) or \code{"backward"}.\cr\cr
-With forward migration, dispersal of propagules is modelled using the \code{delta.prop} argument (see below) while argument \code{migr} is disregarded.\cr\cr
-With backward migration, migration is modelled using argument \code{migr} as in a finite island model (Latter, 1973). In this model, the gene pool of the jth deme contains a proportion \code{1-migr} of gametes derived at random from adults resident in the jth deme in the previous generation, and a proportion \code{migr/(n-1)} of gametes derived at random from adults resident in each of the remaining \code{n-1} demes. Variables \code{L} and \code{S} are not calculated with backward migration (see argument \code{output.var}), because the number of individuals recruiting the deme is calculated directly from the gametes of the previous generations.\cr
-The function will return a warning if \code{(1-migr)*kappa0[j,t+1]} or \code{migr/(n-1)*kappa0[j,t+1]} are not integers, where \code{kappa0[j,t+1]} is the number of individuals that recruits in the generation that is being formed. Backward migration is currently limited to only one age class and monoecious life cycles.\cr\cr
+The type of propagule migration used, \code{"forward"} (the default) or \code{"backward"}.\cr\cr
+With forward migration, dispersal of propagules is modelled using the \code{delta.prop} argument (see below), while argument \code{migr} is disregarded.\cr\cr
+With backward migration, migration is modelled using argument \code{migr} as in a finite island model (Latter, 1973). In this model, the gene pool of the jth deme contains a proportion \code{1-migr} of gametes derived at random from adults resident in the jth deme in the previous generation, and a proportion \code{migr/(n-1)} of gametes derived at random from adults resident in each of the remaining \code{n-1} demes. Variables \code{L} and \code{S} are not calculated with backward migration (see argument \code{output.var}), because the number of individuals recruiting the deme is calculated directly from the gamete frequencies of the previous generations. Arguments \code{phi_F}, \code{phi_M}, \code{fec_distr_F}, \code{fec_distr_M} and \code{delta.prop} are disregarded.\cr
+Backward migration is currently limited to only one age class and monoecious life cycles.\cr\cr
 \code{migration} does not affect adult dispersal.
   }
   
@@ -75,7 +75,8 @@ Defines how population regulation is performed. Currently inactive.
     Vector. If save.res=TRUE, this argument is used to define the time steps for which the state of the metapopulation will be saved on disk. It is used to save disk space in the case of long simulations with many demes or genotypes. It deafults to \code{seq(1,T_max)}, that is, the results are saved every time step.
   }
     \item{output.var}{
-A vector containing the names of the variables output by the simulation: \code{"N"}, \code{"Nprime"}, \code{"Nprimeprime"}, \code{"L"} and \code{"S"}. For example, to output genotype numbers in adults and propagules, set \code{output.var = c("N","L")}. Default to \code{"N"}. 
+A vector containing the names of the variables output by the simulation: \code{"N"}, \code{"Nprime"}, \code{"Nprimeprime"}, \code{"L"} and \code{"S"}. For example, to output genotype numbers in adults and propagules, set \code{output.var = c("N","L")}. Default to \code{"N"}.\cr
+This argument is set in the same way for the monoecious and the dioecious functions. However, the dioecious function returns two variables corresponding to female and male numbers. For example, setting \code{output.var = c("N","L")} in \code{sim.metapopgen.dioecious.multilocus} will return four variables giving genotype numbers in adult females, adult males, propagule females and propagule males.
   }
 
   \item{verbose}{
@@ -92,19 +93,19 @@ Element \code{i,j} of propagule and adult dispersal matrices always indicates di
   \item {If \code{save.res = FALSE}:\cr\cr
   a named list where each element is one of the tracked variables (see argument \code{output.var}). Each of these elements is an array giving the number of individuals of each genotype and deme. Specifically,
   \describe{
-  \item{\code{N}}{
+  \item{\code{N} (monoecious life-cycle) or \code{N_F} and \code{N_M} (dioecious life-cycle)}{
 a 4-D array (ex: \code{N[k,i,x,t])} of length c(m,n,z,T_max) giving the number of individuals of genotype \code{k}, age \code{x} in deme \code{i} at time \code{t}. This is the number of individuals at the beginning of the life cycle, just after recruitment and before adult survival.
 }
-\item{\code{Nprime}}{
+\item{\code{Nprime} (monoecious life-cycle) or \code{Nprime_F} and \code{Nprime_M} (dioecious life-cycle)}{
 a 4-D array (ex: \code{Nprime[k,i,x,t])} of length c(m,n,z,T_max) giving the number of individuals of genotype \code{k}, age \code{x} in deme \code{i} at time \code{t} after adult survival and before adult dispersal.
 }
-\item{\code{Nprimeprime}}{
+\item{\code{Nprimeprime} (monoecious life-cycle) or \code{Nprimeprime_F} and \code{Nprimeprime_M} (dioecious life-cycle)}{
 a 4-D array (ex: \code{Nprimeprime[k,i,x,t])} of length c(m,n,z,T_max) giving the number of individuals of genotype \code{k}, age \code{x} in deme \code{i} at time \code{t} after adult dispersal.
 }
-\item{\code{L}}{
+\item{\code{L} (monoecious life-cycle) or \code{L_F} and \code{L_M} (dioecious life-cycle)}{
 a 3-D array (ex: \code{L[k,i,t])} of length c(m,n,T_max) giving the number of propagules of genotype \code{k}, in deme \code{i} at time \code{t} before propagule dispersal.
 }
-\item{\code{S}}{
+\item{\code{S} (monoecious life-cycle) or \code{S_F} and \code{S_M} (dioecious life-cycle)}{
 a 3-D array (ex: \code{S[k,i,t])} of length c(m,n,T_max) giving the number of propagules of genotype \code{k}, in deme \code{i} at time \code{t} after propagule dispersal.
 }
 }
@@ -112,7 +113,8 @@ a 3-D array (ex: \code{S[k,i,t])} of length c(m,n,T_max) giving the number of pr
 
   \item {If \code{save.res = TRUE}:\cr\cr
   the function does not return anything. Results are saved in files on disk. The function will create a folder named with the date and time of your simulation and create one RData file per year of simulation (but see argument \code{save.res.T} for defining the time steps for which the results are saved) and per chosen output variables (\code{N}, \code{Nprime}, \code{Nprimeprime}, \code{L} and \code{S}). The files will be named with the name of the output variable and the time step of simulation, e.g. N1.RData, S1.RData, etc.\cr\cr
-  The variables contained in each file are as described above for the case (\code{save.res = FALSE}), but they do not have the time dimension. Specifically, \code{N}, \code{Nprime} and \code{Nprimeprime} have length c(m,n,z), and \code{L} and \code{S} have length c(m,n).
+  The variables contained in each file are as described above for the case (\code{save.res = FALSE}), but they do not have the time dimension. Specifically, \code{N}, \code{Nprime} and \code{Nprimeprime} have length c(m,n,z), and \code{L} and \code{S} have length c(m,n).\cr\cr
+  For the dioecious life-cycle, each file contains two variables giving the genotype numbers for females and males for the specific output variable and time step.
   }
   }
 }

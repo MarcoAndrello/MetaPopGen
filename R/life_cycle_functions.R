@@ -157,7 +157,8 @@ repr <- function(Nprime_F, Nprime_M=NULL, phi_F, phi_M, l, m, z, Proba,
 }
 
 # Recruitment with backward migration
-recr.backward.migration <- function(migr, l, m, n, z, j.local.deme, kappa0, sexuality, mat_geno_to_index_mapping, t, # without G_F, G_M, 
+recr.backward.migration <- function(migr, l, m, n, z, j.local.deme, kappa0,
+                                    sexuality, mat_geno_to_index_mapping, t, 
                                     gamete_pool) {
   # G_F is genotype * deme
   # G_M is genotype * deme
@@ -209,8 +210,7 @@ recr.backward.migration <- function(migr, l, m, n, z, j.local.deme, kappa0, sexu
     G_F_local <- as.vector(rmultinom(1, Ntot_recruits, G_j))
     G_M_local <- as.vector(rmultinom(1, Ntot_recruits, G_j))
     
-    # Then, union gametes
-    # Union of gametes to form zygotes
+    # Then, union gametes to form zygotes
     mat_geno <- union.gametes(G_M_local, G_F_local, l)
     
     # Calculate genotype numbers in new recruits (Naged) by adding the combinations of gametotypes

@@ -32,25 +32,24 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
   
   # Check output.var
   for (i.var in 1 : length(output.var)) {
-    if(!output.var[i.var] %in% c("N","Nprime","Nprimeprime","G_F","G_M","L","S")) stop(paste0("Unknown variable in output.var:",output.var[i.var]))
+    if(!output.var[i.var] %in% c("N","Nprime","Nprimeprime","L","S")) stop(paste0("Unknown variable in output.var:",output.var[i.var]))
   }
   # Read output.var
   output.N <- FALSE
   output.Nprime <- FALSE
   output.Nprimeprime <- FALSE
-  output.G_F <- FALSE
-  output.G_M <- FALSE
   output.L <- FALSE
   output.S <- FALSE
   if("N" %in% output.var) output.N <- TRUE
   if("Nprime" %in% output.var) output.Nprime <- TRUE
   if("Nprimeprime" %in% output.var) output.Nprimeprime <- TRUE
-  if("G_F" %in% output.var) output.G_F <- TRUE # check that it's backward migration
-  if("G_M" %in% output.var) output.G_M <- TRUE
   if("L" %in% output.var) output.L <- TRUE
   if("S" %in% output.var) output.S <- TRUE
   
-  # .............................Check the existence of dispersal matrices
+  if (migration == "backward" & output.L == TRUE) stop("Variable \"L\" is not calculated with backward migration. Correct argument \"output.var\"")
+  if (migration == "backward" & output.S == TRUE) stop("Variable \"S\" is not calculated with backward migration. Correct argument \"output.var\"")
+  
+    # .............................Check the existence of dispersal matrices
   if (migration == "forward") {
     if (is.null(delta.prop)) {
       print("Setting propagule dispersal probability (delta.prop)")
@@ -87,13 +86,13 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
   
   # Female fecundity
   if (is.na(dim(phi_F)[4])) {
-      print("Augmenting phi_F for time dimension")
+    print("Augmenting phi_F for time dimension")
     phi_F <- array(rep(phi_F,T_max),c(m,n,z,T_max))
   }
   
   # Male fecundity
   if (is.na(dim(phi_M)[4])) {
-      print("Augmenting phi_M for time dimension")
+    print("Augmenting phi_M for time dimension")
     phi_M <- array(rep(phi_M,T_max),c(m,n,z,T_max))
   }
   
@@ -107,7 +106,7 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
   
   # Carrying capacity
   if (is.vector(kappa0)) {
-      print("Augmenting kappa0 for time dimension")
+    print("Augmenting kappa0 for time dimension")
     kappa0 <- array(rep(kappa0,T_max),c(n,T_max))
   }
   
@@ -119,7 +118,11 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
   print("Initializing variables...")
   if (save.res){
     N <- N1
-    dimnames(N) <- dimnames(N1)
+    dimnamesN1      <- dimnames(N1)
+    dimnamesN1noage <- dimnames(N1)[c(1,2)]
+    
+    dimnames(N) <- dimnamesN1
+    
     rm(N1)    
   } else {
     N           <- array(NA, dim=c(m,n,z,T_max))
@@ -128,31 +131,30 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
     Nprimeprime <- array(0,  dim=c(m,n,z,T_max))
     L           <- array(NA, dim=c(m,n,T_max))
     S           <- array(0, dim=c(m,n,T_max))
-    if (output.G_F) {
-      G_Ft <- array(NA,c(l,n,T_max))
-    }
-    if (output.G_M) {
-      G_Mt <- array(NA,c(l,n,T_max))
-    }
     
     dimnamesN1 <- dimnames(N1)
     dimnamesN1$time <- c(1:T_max)
-    dimnames(N) <- dimnamesN1
-    rm(N1)
-    # Might want to set dimnames for the other objects too
     
+    dimnames(N)           <- dimnamesN1
+    dimnames(Nprime)      <- dimnamesN1
+    dimnames(Nprimeprime) <- dimnamesN1
+    dimnamesN1$age <- NULL
+    dimnames(L)           <- dimnamesN1
+    dimnames(S)           <- dimnamesN1
+    
+    rm(N1, dimnamesN1)
   }
   
   
-  ##########################################################################
-  # Simulate metapopulation genetics
-  ##########################################################################
+  # Create output folder
   if (save.res){
     dir.res.name <- paste(getwd(),format(Sys.time(), "%Y-%b-%d-%H.%M.%S"),sep="/")
     dir.create(dir.res.name)
-
   }
   
+  ##########################################################################
+  # Simulate metapopulation genetics
+  ########################################################################## 
   
   print("Running simulation...")
   for (t in 1 : T_max) {
@@ -161,9 +163,14 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
     # If save.res, redefine variables
     if (save.res) {
       Nprime        <- array(NA,dim=c(m,n,z))
-      Nprimeprime   <- array(0,dim=c(m,n,z))
+      Nprimeprime   <- array(0, dim=c(m,n,z))
       L             <- array(NA,dim=c(m,n))
-      S             <- array(0,dim=c(m,n))
+      S             <- array(0, dim=c(m,n))
+      
+      dimnames(Nprime) <- dimnamesN1
+      dimnames(Nprimeprime) <- dimnamesN1
+      dimnames(L) <- dimnamesN1noage
+      dimnames(S) <- dimnamesN1noage
     }
     
     
@@ -203,7 +210,6 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
             y = disp.ad(Nprime[k,i,x,t], delta.ad[,i,x,t])
             Nprimeprime[k,,x,t] <- Nprimeprime[k,,x,t] + y[1:n]     
           }
-          
         }
       }
     } 
@@ -215,25 +221,14 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
       if (length(dim(phi_F))==2) dim(phi_F)[3] <- 1
       if (length(dim(phi_M))==2) dim(phi_M)[3] <- 1
       
-      # if (migration == "backward") {
-      #   G_F <- array(0,c(l,n))
-      #   G_M <- array(0,c(l,n))
-      # }
-      
       for (i in 1 : n) {
         if (save.res) {
           if (sum(Nprimeprime[,i,])==0) { # To save computing time
             L[,i] = 0
             next
           } else {
-            res.repr <- repr(Nprimeprime[,i,], NULL, phi_F[,i,,t], phi_M[,i,,t], l, m, z,
-                             meiosis_matrix, mat_geno_to_index_mapping, fec.distr_F, fec.distr_M, migration)
-            if (migration == "forward") {
-              L[,i] <- res.repr
-            } else {
-              # G_F[,i] <- res.repr$G_F
-              # G_M[,i] <- res.repr$G_M
-            }
+            L[,i] <- repr(Nprimeprime[,i,], NULL, phi_F[,i,,t], phi_M[,i,,t], l, m, z,
+                          meiosis_matrix, mat_geno_to_index_mapping, fec.distr_F, fec.distr_M, migration)
           }
           
         } else {
@@ -242,27 +237,16 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
             L[,i,t] = 0
             next
           } else {
-            res.repr <- repr(Nprimeprime[,i,,t], NULL, phi_F[,i,,t], phi_M[,i,,t], l, m, z,
-                             meiosis_matrix, mat_geno_to_index_mapping, fec.distr_F, fec.distr_M, migration)
-            if (migration == "forward") {
-              L[,i,t] <- res.repr
-            } else {
-              G_F[,i] <- res.repr$G_F
-              G_M[,i] <- res.repr$G_M
-              
-              if (output.G_F) G_Ft[,,t] <- G_F
-              if (output.G_M) G_Mt[,,t] <- G_M
-            }
+            L[,i,t] <- repr(Nprimeprime[,i,,t], NULL, phi_F[,i,,t], phi_M[,i,,t], l, m, z,
+                            meiosis_matrix, mat_geno_to_index_mapping, fec.distr_F, fec.distr_M, migration)
           }
-          
         }
-        
       }
     }
     
     # Propagule dispersal
     if (migration == "forward") {
-      if (verbose) print("Apply propagule dispersal function")
+      if (verbose) cat("t =",t,"Apply propagule dispersal function \n")
       for (i in 1 : n) {
         for (k in 1 : m) {
           if (save.res) {
@@ -290,14 +274,6 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
       if (output.Nprimeprime) {
         file.name <- paste0("Nprimeprime",t,".RData")
         save(Nprimeprime,file=paste(dir.res.name,file.name,sep="/"))
-      }
-      if (output.G_F) {
-        file.name <- paste0("G_F",t,".RData")
-        save(G_F,file=paste(dir.res.name,file.name,sep="/"))
-      }
-      if (output.G_M) {
-        file.name <- paste0("G_M",t,".RData")
-        save(G_M,file=paste(dir.res.name,file.name,sep="/"))
       }
       if (output.L) {
         file.name <- paste0("L",t,".RData")
@@ -330,10 +306,9 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
       next
     }
     
-    if (verbose) print("Apply recruitment function")
+    if (verbose) cat("t =",t,"Apply recruitment function \n")
     for (i in 1 : n) {
       if (save.res) {
-        # This overwrites N
         N[,i,] <- recr(N = array(Nprimeprime[,i,], dim=c(m,z)),
                        S = array(S[,i], dim=c(m,1)),
                        m = m,
@@ -351,7 +326,6 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
                            sexuality = "monoecious")
       }
     }
-
   }
   print("...done")
   
@@ -365,12 +339,6 @@ sim.metapopgen.monoecious.multilocus <- function(init.par,
     }
     if (output.Nprimeprime) {
       output.res$Nprimeprime <- Nprimeprime
-    }
-    if (output.G_F) {
-      output.res$G_F <- G_Ft
-    }
-    if (output.G_M) {
-      output.res$G_M <- G_Mt
     }
     if (output.L) {
       output.res$L <- L

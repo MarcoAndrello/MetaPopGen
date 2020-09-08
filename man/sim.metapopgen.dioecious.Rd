@@ -15,7 +15,6 @@ Simulates the metapopulation genetics. The function will calculate automatically
                                   phi_F, phi_M,
                                   fec.distr_F = "poisson", fec.distr_M = "poisson",
                                   mu,
-                                  migration = "forward", migr,
                                   delta,
                                   recr.dd="settlers", kappa0,
                                   T_max,
