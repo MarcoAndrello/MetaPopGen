@@ -1,4 +1,4 @@
-# MetaPopGen-2.0
+# MetaPopGen
 METAPOPGEN is a forward-in-time genetic simulator written completely in R to model multi-locus population genetic processes in subdivided populations of arbitrarily large size. It allows for spatial and temporal variation in demographic parameters, age structure, adult and propagule dispersal, variable mutation rates and selection on survival and fecundity.
 
 A description of MetaPopGen can be found in the publications:
