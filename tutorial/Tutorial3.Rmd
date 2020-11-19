@@ -121,16 +121,22 @@ delta.prop
 # Performing the simulation
 The simulation can be performed using the functions sim.metapopgen.monoecious.multilocus (or sim.metapopgen.dioecious.multilocus for dioecious life-cycles)
 ```{r}
-N <- sim.metapopgen.monoecious.multilocus(init.par=init.par,
+res <- sim.metapopgen.monoecious.multilocus(init.par=init.par,
                                           sigma=sigma,
                                           phi_F=phi_F, phi_M=phi_M,
                                           delta.prop=delta.prop, delta.ad=delta.ad,
-                                          T_max=T_max)
+                                          T_max=T_max,
+                                          output.var = "N")
 
 ```
-The results are stored in the object N. For example, look at the final composition of the population at time 5:
+The argument output.var = "N" tells the simulator to record the genetic composition of the population after recruitment and before survival (see the life-cycle in Figure 1 in Andrello et al. 2020, Mol Ecol Res).  The results are stored in the object res. This object is a list containing the composition of the population at the different phases of the life-cycle. Because we have specified output.var = "N", object res contains only one variable, N:
 ```{r}
-N[,,,5]
+names(res)
+
+```
+For example, look at the final composition of the population at time 5:
+```{r}
+res$N[,,,5]
 
 ```
 Your results will generally be different from these because the simulations are stochastic. 
@@ -138,24 +144,24 @@ Your results will generally be different from these because the simulations are 
 # Analysing the results
 MetaPopGen has several functions to analyse the results of the simulations. For example, to calculate allele frequencies, use the function *freq_alleles()*:
 ```{r}
-freq_alleles(N[,2,1,5], init.par)
+freq_alleles(res$N[,2,1,5], init.par)
 
 ```
-Note that the function takes a vector of genotype frequencies as a first argument. Here, we have used N[,2,1,5], the vector of genotype frequencies in deme 2, age 1 at time 5. The function outputs the absolute counts and the relative frequencies of each alleles at each locus.   
+Note that the function takes a vector of genotype frequencies as a first argument. Here, we have used res$N[,2,1,5], the vector of genotype frequencies in deme 2, age 1 at time 5. The function outputs the absolute counts and the relative frequencies of each alleles at each locus.   
 To compute genotype frequencies *per locus*, use the function *freq_genotypes()*:
 ```{r}
-freq_genotypes(N[,2,1,5], init.par)
+freq_genotypes(res$N[,2,1,5], init.par)
 
 ```
 Again, the argument is a vector of genotype frequencies and the output is the absolute counts and the relative frequencies of each genotype at each locus.  
 Genetic differentiation can be calculated using the function *fst_multilocus()*:
 ```{r}
-fst_multilocus(N[,,1,5], init.par)
+fst_multilocus(res$N[,,1,5], init.par)
 
 ```
-Here, the argument of the function is not a vector anymore, but a 2D array. The first dimension of the array contains the genotypes while the second dimension contains the groups. In this example, the groups are the demes. The function then returns the genetic differentiation index between demes at each locus, and the mean over loci. The groups need not be demes, but can also be age classes, sexes, time steps or any other grouping created by the user, provided that the input is a 2D vector and the groups are on the second dimension. For example, the following gives genetic differentiation between year four anf five for individuals of age one in deme two:
+Here, the argument of the function is not a vector, but a 2D array. The first dimension of the array contains the genotypes while the second dimension contains the groups. In this example, the groups are the demes. The function then returns the genetic differentiation index between demes at each locus, and the mean over loci. The groups need not be demes, but can also be age classes, sexes, time steps or any other grouping created by the user, provided that the input is a 2D vector and the groups are on the second dimension. For example, the following gives genetic differentiation between year four and year five for individuals of age one in deme two:
 ```{r}
-fst_multilocus(N[,2,1,4:5], init.par)
+fst_multilocus(res$N[,2,1,4:5], init.par)
 
 ```
 See also other functions to calculate gamete frequencies (*freq_gametes*), observed and expected heterozygosities (*het.obs* and *het.exp*), and linkage disequilibrium (*ld*).
